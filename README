@@ -1,0 +1,52 @@
+EMASE2 README File
+-----------------
+
+
+Overview
+--------
+
+EMASE: Expectation-Maximization algorithm for Allele Specific Expression
+
+Narayanan Raghupathy, Kwangbom Choi, Steve Munger, Glen Beane, Al Simons,
+and Gary Churchill
+
+
+What is EMASE2?
+
+EMASE2 is a software program written in C++ to quantify allele-specific
+expression and gene expression simultaneously from RNA-seq data.  EMASE2
+takes in a custom file format as input, which is constructed from the
+diploid transcriptome alignment BAM file and two text files containing
+transcript to gene mapping information using the provided bam_to_pcl.py
+script.
+
+EMASE2, a C++ version of EMASE, is still under development and is based on
+the Python prototype of EMASE which is available here:
+https://github.com/churchill-lab/emase
+
+The README for the original Python version can be found here:
+https://github.com/churchill-lab/emase/blob/master/README.rst
+
+
+License
+-------
+
+Please see the included LICENSE file.
+
+
+Installation
+------------
+
+Please see the included INSTALL file.
+
+
+To Do
+-----
+
+EMASE2 is still under development.  Here are some of the things we have
+planned:
+
+ * multi-threading
+ * better packaging and installation
+ * improved error checking
+ * improved documentation
