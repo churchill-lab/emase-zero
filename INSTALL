@@ -1,1 +1,22 @@
-TODO
+EMASE2 INSTALL
+
+Building and installing EMASE2 requires a C++ compiler and Python 2.7.
+Python is required to load data from the input file format, which
+consists of several Pickled Python data structures. The TranscriptHits
+Python module requires pysam, numpy, and scipy.
+
+Compilation:
+
+cd src
+make
+
+This will create an executable called emase2 in the src directory. You
+can copy this executable into your desired bin directory (such as
+/usr/local/bin)
+
+In order to execute emase2, the Python interpreter needs to be able to
+load the TranscriptHits module.  You can either add the path to the
+directory containing the TranscriptHits.py file to PYTHONPATH, or you
+can use the included setup.py script to install the Python module.  This
+will also install two utility scripts, bam_to_pcl.py and pcl_info.py,
+which are used create and view the pcl.bz2 input files for emase2. 
