@@ -35,44 +35,46 @@
 class SampleAllelicExpression {
 
 public:
-    
+
     enum model {MODEL_1 = 1, MODEL_2 = 2, MODEL_4 = 4};
-    
-    SampleAllelicExpression(AlignmentIncidenceMatrix *alignment_incidence);
+
+    SampleAllelicExpression(AlignmentIncidenceMatrix *alignment_incidence, int read_length);
     ~SampleAllelicExpression();
     void update(model m = MODEL_2);
     bool converged();
     inline int size() {return num_haplotypes * num_transcripts;}
     void saveStackSums(std::string filename);
+    void applyTranscriptLength();
 
 private:
-    
-    
+
+
     AlignmentIncidenceMatrix *alignment_incidence_;
 
     double *current_;
     double *previous_;
     double *working_;
-    
+
     double *gene_sums_;
     double *gene_sum_hits_only_;
     double *transcript_sums_;
     double *gene_sum_by_strain_;
     double *gene_sum_by_strain_hits_only_;
-    
+
     int *gene_masks_;
-    
+
     int num_haplotypes;
     int num_transcripts;
-        
+    int read_length_;
+
     void init();
     void init_normalize_read();
-    
+
     void updateModel1();
     void updateModel2();
     void updateModel4();
-    
-    DISALLOW_COPY_AND_ASSIGN(SampleAllelicExpression);    
+
+    DISALLOW_COPY_AND_ASSIGN(SampleAllelicExpression);
 };
 
 #endif

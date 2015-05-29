@@ -20,7 +20,7 @@
 
 //
 //  alignment_incidence_matrix.h
-//  
+//
 //
 //  Created by Glen Beane on 8/20/14.
 //
@@ -40,76 +40,80 @@ class SampleAllelicExpression;
 
 
 class AlignmentIncidenceMatrix {
-    
+
 public:
-    
-    
+
+
     AlignmentIncidenceMatrix(std::vector<std::string> haplotypes,
                              std::vector<std::string> reads,
                              std::vector<std::string> transcripts,
                              std::vector<int> col_ind,
                              std::vector<int> row_ptr,
                              std::vector<int> val);
-      
-    
-    
+
+    ~AlignmentIncidenceMatrix();
+
+
     inline std::vector<std::string>::size_type num_haplotypes() {
         return haplotype_names.size();
     }
-    
+
     inline std::vector<std::string>::size_type num_transcripts() {
         return transcript_names.size();
     }
-    
+
     inline std::vector<std::string>::size_type num_reads() {
         return read_names.size();
     }
-    
+
     inline std::vector<std::string> get_haplotype_names() {
         return haplotype_names;
     }
-    
+
     inline std::vector<std::string> get_gene_names() {
         return gene_names;
     }
-    
+
     void setGeneMappings(std::vector<int> tx_to_gene);
-    
+
     void setGeneNames(std::vector<std::string> gene_names);
-    
+
     inline int num_genes() {
         return num_genes_;
     }
-    
+
     inline bool has_gene_mappings() {
         return has_gene_mappings_;
     }
-    
+
+    void loadTranscriptLengths(std::string path);
 
 private:
- 
+
     // SampleAllelicExpression needs access to the sparse matrix may just merge these classes...
     friend class SampleAllelicExpression;
-    
+
     std::vector<std::string> haplotype_names;
     std::vector<std::string> transcript_names;
     std::vector<std::string> read_names;
-    
+
     std::vector<std::string> gene_names;
     std::vector<int> tx_to_gene;
-    
+
     std::vector<int> col_ind;
     std::vector<int> row_ptr;
     std::vector<int> val;
-    
+
     std::vector<int> gene_mapping;
-    
+
+    int *transcript_lengths_;
+
     int num_genes_;
-    
+
     bool has_gene_mappings_;
-    
-    
-    
+
+
+
     DISALLOW_COPY_AND_ASSIGN(AlignmentIncidenceMatrix);
 };
 
