@@ -167,7 +167,7 @@ void SampleAllelicExpression::update(SampleAllelicExpression::model m)
             break;
     }
 
-    //applyTranscriptLength();
+    applyTranscriptLength();
 
 }
 
@@ -524,9 +524,8 @@ void SampleAllelicExpression::applyTranscriptLength() {
 
     for (int i = 0; i < num_transcripts; i++) {
         for (int j = 0; j < num_haplotypes;  j++) {
-            if (current_[i * num_haplotypes + j] == 0.0)
-                continue;
-            current_[i * num_haplotypes + j] /= (alignment_incidence_->transcript_lengths_[i] - read_length_ + 1);
+            current_[i * num_haplotypes + j] /= std::max(1.0, double(alignment_incidence_->transcript_lengths_[i] - read_length_ + 1));
+            sum += current_[i * num_haplotypes + j];
         }
     }
 }
