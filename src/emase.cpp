@@ -208,6 +208,7 @@ void print_help()
               << "  --model (-m) : Specify normalization model (can be 1-4, default=2)\n"
               << "  --output (-o) : Specify filename for output file (default is input_basename.stacksum.tsv)\n"
               << "  --transcript-lengths (-l) : Filename for transcript length file. Format is \"transcript_id\tlength\"\n"
-              << "  --read-length (-k) : Specify read length for use when apply transcript lengths\n"
+              << "  --read-length (-k) : Specify read length for use when applying transcript length adjustment.\n"
+              << "                       Ignored unless combined with --transcript-lengths. (Default 100)\n"
               << "  --help (-h) : Print this message and exit\n\n";
 }
