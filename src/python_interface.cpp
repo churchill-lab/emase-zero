@@ -46,52 +46,48 @@ int PythonInterface::init()
 {
     Py_Initialize();
     module_ = PyImport_ImportModule(module_name);
-    
+
     if (!module_) {
         //TODO do something, this is likely a python path issue
+        if (PyErr_Occurred()) {
+            setErrorStringFromPythonError();
+        }
+        else {
+            err_string = "Unable to load TranscriptHits Python Module. Check PYTHONPATH.";
+        }
         return 1;
     }
-    
+
     module_dict_ = PyModule_GetDict((PyObject*)module_);
-    
+
     PyObject *constructor = PyDict_GetItemString((PyObject*)module_dict_, "TranscriptHits");
     transcript_hits_ = PyObject_CallObject(constructor, NULL);
     Py_DECREF(constructor);
-    
+
     return 0;
 }
 
 AlignmentIncidenceMatrix *PythonInterface::load(std::string filename) {
     AlignmentIncidenceMatrix *aim = NULL;
-    
+
     // some variables we will reuse as we interact with the Python object
     PyObject *results;
-    
+
     //read in file
     results = PyObject_CallMethod((PyObject*)transcript_hits_, (char*)"load", (char*)"s", filename.c_str());
-    
+
     if (!results) {
         if (PyErr_Occurred()) {
-            PyObject *excType, *excValue, *excTraceback;
-            PyErr_Fetch(&excType, &excValue, &excTraceback);
-            PyErr_NormalizeException(&excType, &excValue, &excTraceback);
-            
-            PyObject *pystr = PyObject_Str(excValue);
-            err_string = std::string(PyString_AsString(pystr));
-            
-            Py_DECREF(excType);
-            Py_DECREF(excValue);
-            Py_DECREF(excTraceback);
-            Py_DECREF(pystr);
+            setErrorStringFromPythonError();
         }
         return NULL;
     }
-    
+
     Py_DECREF(results);
-    
+
     //TODO need to do some error checking and make sure these three calls don't return empty vectors
-    
-    
+
+
     PyObject *vectors = PyObject_CallMethod((PyObject*)transcript_hits_, (char*)"to_populase_array", NULL);
     PyObject *indptr = PyDict_GetItemString(vectors, (char*)"indptr");
     PyObject *indices = PyDict_GetItemString(vectors, (char*)"indices");
@@ -101,8 +97,8 @@ AlignmentIncidenceMatrix *PythonInterface::load(std::string filename) {
     PyObject *genes = PyDict_GetItemString(vectors, (char*)"genes");
     PyObject *tx_to_gene = PyDict_GetItemString(vectors, (char*)"tx_to_gene");
     PyObject *strains = PyDict_GetItemString(vectors, (char*)"strains");
-    
-    
+
+
     // These are all cadidates for return value optimization, which should avoid unnecessary copies
     std::vector<std::string> read_names = pythonStringListToVector(reads);
     std::vector<std::string> transcript_names = pythonStringListToVector(transcripts);
@@ -112,38 +108,38 @@ AlignmentIncidenceMatrix *PythonInterface::load(std::string filename) {
     std::vector<int> col_ind = pythonIntListToVector(indices);
     std::vector<int> val = pythonIntListToVector(values);
     std::vector<std::string> haplotype_names = pythonStringListToVector(strains);
-    
-    
+
+
     // do some limited error checking
-    
+
     if (col_ind.size() != val.size()) {
         err_string = "Sparse matrix column index vector does not match value vector. File is corrupt.";
         return NULL;
     }
-    
+
     if (transcript_to_gene.size() > 0 && transcript_to_gene.size() < transcript_names.size()) {
         // file contained transcript to gene mappings, but lenght of the mapping vector does not match the number of transcripts
         err_string = "Input file contained transcript to gene mapping information, but size of mapping vector does not match number of transcripts.";
         return NULL;
     }
-    
+
 
     aim = new AlignmentIncidenceMatrix(haplotype_names, read_names, transcript_names, col_ind, row_ptr, val);
-    
+
     if (transcript_to_gene.size()) {
         aim->setGeneMappings(transcript_to_gene);
     }
-    
+
     aim->setGeneNames(gene_names);
     return aim;
 }
- 
+
 std::vector<std::string> pythonStringListToVector(PyObject *list) {
     std::vector<std::string> strings;
-    
+
     Py_ssize_t size = PySequence_Size(list);
     strings.reserve(size);
-    
+
     for (Py_ssize_t i = 0; i < size; ++i) {
         PyObject *s = PySequence_ITEM(list, i);
         strings.push_back(std::string(PyString_AsString(s)));
@@ -154,14 +150,31 @@ std::vector<std::string> pythonStringListToVector(PyObject *list) {
 
 std::vector<int> pythonIntListToVector(PyObject *list) {
     std::vector<int> v;
-    
+
     Py_ssize_t size = PySequence_Size(list);
     v.reserve(size);
-    
+
     for (Py_ssize_t i = 0; i < size; ++i) {
         PyObject *s = PySequence_ITEM(list, i);
         v.push_back((int)PyInt_AsLong(s));
         Py_DECREF(s);
     }
     return v;
+}
+
+void PythonInterface::setErrorStringFromPythonError() {
+    PyObject *excType, *excValue, *excTraceback;
+    PyErr_Fetch(&excType, &excValue, &excTraceback);
+    PyErr_NormalizeException(&excType, &excValue, &excTraceback);
+
+    if (excValue) {
+        PyObject *pystr = PyObject_Str(excValue);
+        err_string = std::string(PyString_AsString(pystr));
+
+        Py_DECREF(pystr);
+    }
+
+    Py_DECREF(excType);
+    Py_XDECREF(excValue);
+    Py_XDECREF(excTraceback);
 }

@@ -31,25 +31,26 @@
 #include "alignment_incidence_matrix.h"
 
 class PythonInterface {
-    
+
 public:
     PythonInterface();
     int init();
     AlignmentIncidenceMatrix *load(std::string filename);
-    
+    void setErrorStringFromPythonError();
+
     inline std::string getErrorString() {
         return err_string;
     }
 
 private:
-    
+
     void *module_;
     void *module_dict_;
     void *transcript_hits_;
-    
+
     std::string err_string;
-    
+
 };
 
 
-#endif 
+#endif
