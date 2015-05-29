@@ -525,7 +525,6 @@ void SampleAllelicExpression::applyTranscriptLength() {
     for (int i = 0; i < num_transcripts; i++) {
         for (int j = 0; j < num_haplotypes;  j++) {
             current_[i * num_haplotypes + j] /= std::max(1.0, double(alignment_incidence_->transcript_lengths_[i] - read_length_ + 1));
-            sum += current_[i * num_haplotypes + j];
         }
     }
 }
