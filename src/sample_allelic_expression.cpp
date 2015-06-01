@@ -114,9 +114,14 @@ void SampleAllelicExpression::init_normalize_read()
         read_sum = 0.0;
         free_slots = working_size;
 
+        // alignment_incidence_->row_ptr[i] gives us the start index for the
+        // nozero values that make up this row
+        // and there will be alignment_incidence_->row_ptr[i+1] - alignment_incidence_->row_ptr[i] values
         for (long j = alignment_incidence_->row_ptr[i]; j < alignment_incidence_->row_ptr[i+1]; ++j) {
 
-            free_slots -= num_haplotypes;
+            // make sure we haven't run out of memory in our working_ buffer
+            // if it is full, double the capacity.  The size will always be a
+            // multiple of num_haplotypes.
             if (free_slots == 0) {
                 double *tmp = working_;
                 working_ = new double[working_size * 2];
@@ -126,8 +131,15 @@ void SampleAllelicExpression::init_normalize_read()
                 delete tmp;
             }
 
+            // going to consume num_haplotypes more elements in working_ so
+            // decrement the amount of free space
+            free_slots -= num_haplotypes;
+
+
+            // okay, we can do the actual work for this read
             for (int k = 0; k < num_haplotypes; ++k) {
-                // initialize all strains at this locus
+                // initialize to 1.0 if they had a hit, 0 otherwise
+                // each haplotype is represented by a single bit in the value
                 if (alignment_incidence_->val[j] & (1 << k)) {
                     working_[work_index++] = 1.0;
                     read_sum += 1.0;
@@ -486,12 +498,18 @@ bool SampleAllelicExpression::converged()
         sum += std::abs(current_[i] - previous_[i]);
     }
 
-    if (std::isnan(sum) || (sum < 0.001 * alignment_incidence_->num_reads())) {
+    if (alignment_incidence_->transcript_lengths_) {
+        if (sum < 0.0001 * 1000000) {
+            return true;
+        }
+    }
+    else if (sum < 0.001 * alignment_incidence_->num_reads()) {
         return true;
     }
 
     return false;
 }
+
 
 void SampleAllelicExpression::saveStackSums(std::string filename)
 {
@@ -517,14 +535,23 @@ void SampleAllelicExpression::saveStackSums(std::string filename)
 }
 
 void SampleAllelicExpression::applyTranscriptLength() {
+    double sum = 0.0;
+
     if (!alignment_incidence_->transcript_lengths_) {
-        // didn't load transcript lenghts, don't do anything
+        // didn't load transcript lengths, don't do anything
         return;
     }
 
     for (int i = 0; i < num_transcripts; i++) {
         for (int j = 0; j < num_haplotypes;  j++) {
             current_[i * num_haplotypes + j] /= std::max(1.0, double(alignment_incidence_->transcript_lengths_[i] - read_length_ + 1));
+            sum += current_[i * num_haplotypes + j];
+        }
+    }
+
+    for (int i = 0; i < num_transcripts; i++) {
+        for (int j = 0; j < num_haplotypes; j++) {
+            current_[i * num_haplotypes + j] *= 1000000.0 / sum;
         }
     }
 }

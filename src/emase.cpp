@@ -163,7 +163,7 @@ int main(int argc, char **argv)
     std::cout << std::endl;
 
     if (!transcript_length_file.empty()) {
-        std::cout << "Loading Transcript Lenght File " << transcript_length_file << std::endl;
+        std::cout << "Loading Transcript Length File " << transcript_length_file << std::endl;
         aim->loadTranscriptLengths(transcript_length_file);
     }
 
