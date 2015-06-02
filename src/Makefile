@@ -7,7 +7,7 @@ OBJ=alignment_incidence_matrix.o python_interface.o sample_allelic_expression.o 
 default: emase2
 
 
-emase2: alignment_incidence_matrix.o python_interface.o sample_allelic_expression.o emase.o
+emase2: $(OBJ) 
 	$(CC) -o emase2 $(OBJ) $(LDFLAGS)
 
 # the sed command here strips out a flag that doesn't make sense for C++ and may
