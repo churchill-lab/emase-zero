@@ -28,6 +28,7 @@
 
 #include <iostream>
 #include <fstream>
+#include <sstream>
 #include <map>
 
 #include "alignment_incidence_matrix.h"
@@ -68,55 +69,79 @@ void AlignmentIncidenceMatrix::loadTranscriptLengths(std::string path) {
     // the length file is the same as the order they are obtained from the input
     // file we go through the pain of
     std::map<std::string, int> transcript_name_to_id;
+    std::map<std::string, int> haplotype_name_to_id;
 
-    for (int i = 0; i < transcript_names.size(); ++i) {
+    for (int i = 0; i < num_transcripts(); ++i) {
         transcript_name_to_id[transcript_names[i]] = i;
+    }
+
+    for (int i = 0; i < num_haplotypes(); ++i) {
+        haplotype_name_to_id[haplotype_names[i]] = i;
     }
 
     int lengths_loaded = 0;
 
-    transcript_lengths_ = new int[transcript_names.size()];
+    transcript_lengths_ = new int[num_transcripts() * num_haplotypes()];
 
     if (!input.is_open()) {
-        // TODO handle error condition
+        // something went wrong reading from stream for now just bail out
+        std::cerr << "ERROR LOADING TRANSCRIPT LENGHT FILE " << path << std::endl;
+        exit(1);
     }
 
+    int total_elements = num_transcripts() * num_haplotypes();
+
     int length;
+    std::string t_name;
+    std::string hap_name;
     std::string id;
+
     while (input >> id >> length) {
 
-        if (++lengths_loaded > transcript_names.size()) {
+        // need to split t_name:  form read from file is transcriptName_haplotypeName
+        std::stringstream id_stringstream(id);
+        std::getline(id_stringstream, t_name, '_');
+        std::getline(id_stringstream, hap_name, '_');
+
+        if (++lengths_loaded > total_elements) {
             // lengths file contained more transcripts than we expected.
             // for now, just bail out
 
             std::cerr << "ERROR LOADING TRANSCRIPT LENGTH FILE " << path << std::endl
-                      << "EXPECTED " << transcript_names.size() << " TRANSCRIPTS BUT FILE CONTAINS MORE\n";
+                      << "EXPECTED " << total_elements << " LENGTH VALUES BUT FILE CONTAINS MORE\n";
             exit(1);
 
         }
 
-        auto search = transcript_name_to_id.find(id);
+        auto transcript_search = transcript_name_to_id.find(t_name);
 
-        if (search == transcript_name_to_id.end()) {
+        if (transcript_search == transcript_name_to_id.end()) {
             // handle error condition.  Should we abort?  Should we just
             // continue without transcript lengths? For now we will just print
             // an error message and exit.
 
             std::cerr << "ERROR LOADING TRANSCRIPT LENGTH FILE " << path << std::endl
-                      << "UNKNOWN TRANSCRIPT ID: " << id << std::endl;
+                      << "UNKNOWN TRANSCRIPT ID: " << t_name << std::endl;
 
             exit(1);
         }
 
+        auto hap_search = haplotype_name_to_id.find(hap_name);
+
+        if (hap_search == haplotype_name_to_id.end()) {
+            std::cerr << "ERROR LOADING TRANSCRIPT LENGTH FILE " << path << std::endl
+                      << "UNKNOWN HAPLOTYPE NAME: " << hap_name << std::endl;
+        }
+
         // it exists,  add its lenght to our list of transcript lengths
-        transcript_lengths_[search->second] = length;
+        transcript_lengths_[transcript_search->second * num_haplotypes() + hap_search->second] = length;
 
     }
 
-    if (lengths_loaded != transcript_names.size()) {
+    if (lengths_loaded != total_elements) {
         // didn't have enough transcripts in file.  for now, just bail out.
         std::cerr << "ERROR LOADING TRANSCRIPT LENGHT FILE " << path << std::endl
-                  << "EXPECTED " << transcript_names.size() << " TRANSCRIPTS BUT FILE CONTAINS FEWER\n";
+                  << "EXPECTED " << total_elements << " VALUES BUT FILE CONTAINS FEWER\n";
         exit(1);
     }
 

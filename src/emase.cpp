@@ -66,10 +66,11 @@ int main(int argc, char **argv)
         {"output", required_argument, 0, 'o'},
         {"read-length", required_argument, 0, 'k'},
         {"transcript-lengths", required_argument, 0, 'l'},
+        {"max-iterations", required_argument, 0, 'i'},
         {0, 0, 0, 0}
     };
 
-    while ((c = getopt_long(argc, argv, "hm:o:k:l:", long_options, &option_index)) != -1) {
+    while ((c = getopt_long(argc, argv, "hm:o:k:l:i:", long_options, &option_index)) != -1) {
         switch (c) {
             case 'h':
                 print_help();
@@ -109,6 +110,9 @@ int main(int argc, char **argv)
             case 'l':
                 transcript_length_file = std::string(optarg);
                 break;
+
+            case 'i':
+                max_iterations = std::stoi(optarg);
 
         }
     }
@@ -178,18 +182,19 @@ int main(int argc, char **argv)
     diff = ((float)t2-(float)t1)/CLOCKS_PER_SEC;
     std::cout << "Time for initializing stack sum = " << diff << "s" << std::endl;
 
+    if (max_iterations > 0) {
+        num_iterations = 0;
+        std::cout << "Beginning EM Iterations" << std::endl;
+        t1 = clock();
+        do {
+            sae.update(model);
+        } while (++num_iterations < max_iterations && !sae.converged());
+        t2 = clock();
 
-    num_iterations = 0;
-    std::cout << "Beginning EM Iterations" << std::endl;
-    t1 = clock();
-    do {
-        sae.update(model);
-    } while (++num_iterations < max_iterations && !sae.converged());
-    t2 = clock();
-
-    diff = ((float)t2-(float)t1)/CLOCKS_PER_SEC;
-    std::cout << "Time for " << num_iterations << " iterations = " << diff << "s\n";
-    std::cout << "Time per iteration " << diff/num_iterations << "s\n";
+        diff = ((float)t2-(float)t1)/CLOCKS_PER_SEC;
+        std::cout << "Time for " << num_iterations << " iterations = " << diff << "s\n";
+        std::cout << "Time per iteration " << diff/num_iterations << "s\n";
+    }
 
     std::cout << "Saving results to " << output_filename << std::endl;
     sae.saveStackSums(output_filename);
@@ -210,5 +215,6 @@ void print_help()
               << "  --transcript-lengths (-l) : Filename for transcript length file. Format is \"transcript_id\tlength\"\n"
               << "  --read-length (-k) : Specify read length for use when applying transcript length adjustment.\n"
               << "                       Ignored unless combined with --transcript-lengths. (Default 100)\n"
+              << "  --max-iterations (-i) : Specify the maximum number of EM iterations. (Default 200)\n"
               << "  --help (-h) : Print this message and exit\n\n";
 }
