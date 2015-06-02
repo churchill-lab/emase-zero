@@ -48,7 +48,6 @@ int PythonInterface::init()
     module_ = PyImport_ImportModule(module_name);
 
     if (!module_) {
-        //TODO do something, this is likely a python path issue
         if (PyErr_Occurred()) {
             setErrorStringFromPythonError();
         }
