@@ -26,6 +26,7 @@
 //  Created by Glen Beane on 8/20/14.
 //
 
+#include <algorithm>
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -43,6 +44,8 @@ AlignmentIncidenceMatrix::AlignmentIncidenceMatrix(std::vector<std::string> hapl
     has_gene_mappings_ = false;
     transcript_lengths_ = NULL;
 
+    counts = std::vector<int>(reads.size(), 1);
+    std::cout << "hi  " <<  counts.size() << std::endl;
 }
 
 AlignmentIncidenceMatrix::~AlignmentIncidenceMatrix() {

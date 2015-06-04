@@ -106,6 +106,8 @@ private:
 
     std::vector<int> gene_mapping;
 
+    std::vector<int> counts;
+
     int *transcript_lengths_;
 
     int num_genes_;
