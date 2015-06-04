@@ -56,9 +56,9 @@ int main(int argc, char **argv)
     std::string extension = ".pcl.bz2";
 
     //getopt related variables
-    opterr = 0;
     int c;
     int option_index = 0;
+    int bad_args = 0;
 
     static struct option long_options[] = {
         {"help", no_argument, 0, 'h'},
@@ -113,11 +113,28 @@ int main(int argc, char **argv)
 
             case 'i':
                 max_iterations = std::stoi(optarg);
+                break;
+
+            case '?':
+                bad_args++;
 
         }
     }
 
-    input_filename = argv[optind];
+    if (bad_args) {
+        print_help();
+        return 1;
+    }
+
+
+    if (argc - optind == 1) {
+        input_filename = argv[optind];
+    }
+    else {
+        // TODO print error message.  no
+        print_help();
+        return 1;
+    }
 
     if (extension.size() >= input_filename.size() || !std::equal(extension.rbegin(), extension.rend(), input_filename.rbegin())) {
         std::cerr << "Error, expected file with .pcl.bz2 extension. Input file should be prepared with bam_to_pcl.py script.\n";
@@ -206,7 +223,9 @@ int main(int argc, char **argv)
 
 void print_help()
 {
-    std::cout << "EMASE Help\n\n"
+    std::cout << std::endl << std::endl
+              << "EMASE Help\n"
+              << "----------\n\n"
               << "USAGE: emase [options] <alignment_incidence>\n\n"
               << "INPUT: Alignment Incidence file prepared with bam_to_pcl.py script\n\n"
               << "OPTIONS\n"
