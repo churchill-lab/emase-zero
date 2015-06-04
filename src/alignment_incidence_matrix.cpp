@@ -45,7 +45,6 @@ AlignmentIncidenceMatrix::AlignmentIncidenceMatrix(std::vector<std::string> hapl
     transcript_lengths_ = NULL;
 
     counts = std::vector<int>(reads.size(), 1);
-    std::cout << "hi  " <<  counts.size() << std::endl;
 }
 
 AlignmentIncidenceMatrix::~AlignmentIncidenceMatrix() {
