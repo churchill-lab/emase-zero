@@ -25,14 +25,25 @@
 #include "alignment_incidence_matrix.h"
 
 
+/* This function will read in a binary file produced by Matt Vincent's
+   Kallisto exporter (https://github.com/churchill-lab/kallisto-export) and
+   create an AlignmentIncidenceMatrix instance.  A pointer to the new aim
+   object will be returned.  If there is a problem loading the file, NULL will
+   be returned.
+
+   This code assumes that the reads/equivalence classes are stored in order.
+ */
 AlignmentIncidenceMatrix *loadFromBin(std::string filename)
 {
     AlignmentIncidenceMatrix *aim = NULL;
 
+    // the following vectors will hold the data we read in from the file,
+    // the values, col_ind, and row_ptr vectors are the compressed row format
+    // sparse matrix representation of the alignments.  counts are used for
+    // equivalence class data, it is not used for read data
     std::vector<std::string> haplotypes;
     std::vector<std::string> reads;
     std::vector<std::string> transcripts;
-
     std::vector<int> values;
     std::vector<int> col_ind;
     std::vector<int> row_ptr;
@@ -135,6 +146,13 @@ AlignmentIncidenceMatrix *loadFromBin(std::string filename)
                 infile.read((char*)&transcript_id, sizeof(int));
                 infile.read((char*)&value, sizeof(int));
 
+                // sanity check that read_id is not less than last_read
+                if (read_id < last_read) {
+                    // this is a problem with the file
+                    std::cerr << "ERROR: binary input file must be sorted\n";
+                    return NULL;
+                }
+
                 values.push_back(value);
                 col_ind.push_back(transcript_id);
 
@@ -166,6 +184,13 @@ AlignmentIncidenceMatrix *loadFromBin(std::string filename)
                 infile.read((char*)&transcript_id, sizeof(int));
                 infile.read((char*)&value, sizeof(int));
                 infile.read((char*)&count, sizeof(int));
+
+                // sanity check that read_id is not less than last_read
+                if (equivalence_id < last_ec) {
+                    // this is a problem with the file
+                    std::cerr << "ERROR: binary input file must be sorted\n";
+                    return NULL;
+                }
 
                 values.push_back(value);
                 col_ind.push_back(transcript_id);
