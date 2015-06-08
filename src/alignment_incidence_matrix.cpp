@@ -39,7 +39,14 @@ AlignmentIncidenceMatrix::AlignmentIncidenceMatrix(std::vector<std::string> hapl
                                                    std::vector<std::string> transcripts,
                                                    std::vector<int> col_ind,
                                                    std::vector<int> row_ptr,
-                                                   std::vector<int> val) : haplotype_names(haplotypes), transcript_names(transcripts), read_names(reads), col_ind(col_ind), row_ptr(row_ptr), val(val) {
+                                                   std::vector<int> val) :
+    haplotype_names(haplotypes),
+    transcript_names(transcripts),
+    read_names(reads),
+    col_ind(col_ind),
+    row_ptr(row_ptr),
+    val(val)
+{
 
     has_gene_mappings_ = false;
     transcript_lengths_ = NULL;
@@ -53,7 +60,15 @@ AlignmentIncidenceMatrix::AlignmentIncidenceMatrix(std::vector<std::string> hapl
                                                    std::vector<int> col_ind,
                                                    std::vector<int> row_ptr,
                                                    std::vector<int> val,
-                                                   std::vector<int> counts) : haplotype_names(haplotypes), transcript_names(transcripts), read_names(reads), col_ind(col_ind), row_ptr(row_ptr), val(val), counts(counts) {
+                                                   std::vector<int> counts) :
+    haplotype_names(haplotypes),
+    transcript_names(transcripts),
+    read_names(reads),
+    col_ind(col_ind),
+    row_ptr(row_ptr),
+    val(val),
+    counts(counts)
+{
 
     has_gene_mappings_ = false;
     transcript_lengths_ = NULL;
