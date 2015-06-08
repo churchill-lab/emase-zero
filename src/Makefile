@@ -2,7 +2,7 @@ CC=g++
 CFLAGS=-I. -std=c++0x -O3 -ftree-vectorize -msse2
 LDFLAGS=`python-config --ldflags`
 
-OBJ=alignment_incidence_matrix.o python_interface.o sample_allelic_expression.o emase.o
+OBJ=alignment_incidence_matrix.o python_interface.o sample_allelic_expression.o emase.o kallisto_import.o
 
 default: emase2
 

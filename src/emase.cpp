@@ -34,14 +34,16 @@
 #include "alignment_incidence_matrix.h"
 #include "sample_allelic_expression.h"
 #include "python_interface.h"
+#include "kallisto_import.h"
 
 void print_help();
 
 
 int main(int argc, char **argv)
 {
-    clock_t t1, t2;
-    float diff;
+    AlignmentIncidenceMatrix *aim;
+
+    bool binary_input = false;
 
     int num_iterations;
     int max_iterations = 200;
@@ -49,6 +51,9 @@ int main(int argc, char **argv)
 
     SampleAllelicExpression::model model = SampleAllelicExpression::MODEL_2;
     int m;
+
+    clock_t t1, t2;
+    float diff;
 
     std::string input_filename;
     std::string output_filename;
@@ -67,10 +72,11 @@ int main(int argc, char **argv)
         {"read-length", required_argument, 0, 'k'},
         {"transcript-lengths", required_argument, 0, 'l'},
         {"max-iterations", required_argument, 0, 'i'},
+        {"bin", no_argument, 0, 'b'},
         {0, 0, 0, 0}
     };
 
-    while ((c = getopt_long(argc, argv, "hm:o:k:l:i:", long_options, &option_index)) != -1) {
+    while ((c = getopt_long(argc, argv, "hm:o:k:l:i:b", long_options, &option_index)) != -1) {
         switch (c) {
             case 'h':
                 print_help();
@@ -115,6 +121,10 @@ int main(int argc, char **argv)
                 max_iterations = std::stoi(optarg);
                 break;
 
+            case 'b':
+                binary_input = true;
+                break;
+
             case '?':
                 bad_args++;
 
@@ -131,12 +141,12 @@ int main(int argc, char **argv)
         input_filename = argv[optind];
     }
     else {
-        // TODO print error message.  no
+        // TODO print error message
         print_help();
         return 1;
     }
 
-    if (extension.size() >= input_filename.size() || !std::equal(extension.rbegin(), extension.rend(), input_filename.rbegin())) {
+    if (!binary_input && (extension.size() >= input_filename.size() || !std::equal(extension.rbegin(), extension.rend(), input_filename.rbegin()))) {
         std::cerr << "Error, expected file with .pcl.bz2 extension. Input file should be prepared with bam_to_pcl.py script.\n";
         return 1;
     }
@@ -153,21 +163,33 @@ int main(int argc, char **argv)
 
     }
 
-    PythonInterface pi = PythonInterface();
-    if (pi.init()){
-        std::cerr << "Error importing TranscriptHits Python module.\n";
-        std::cerr << '\t' << pi.getErrorString() << std::endl;
-        return 1;
+
+    if (binary_input) {
+        aim = loadFromBin(input_filename);
+
+        if (!aim) {
+            std::cerr << "Error loading binary input file\n";
+            return 1;
+        }
+    }
+    else {    
+        PythonInterface pi = PythonInterface();
+        if (pi.init()){
+            std::cerr << "Error importing TranscriptHits Python module.\n";
+            std::cerr << '\t' << pi.getErrorString() << std::endl;
+            return 1;
+        }
+
+        std::cout << "Loading " << input_filename << ". This may take a while..." << std::endl;
+        aim = pi.load(input_filename);
+
+        if (!aim) {
+            std::cerr << "Error loading pcl file\n";
+            std::cerr << '\t' << pi.getErrorString() << std::endl;
+            return 1;
+        }
     }
 
-    std::cout << "Loading " << input_filename << ". This may take a while..." << std::endl;
-    AlignmentIncidenceMatrix *aim = pi.load(input_filename);
-
-    if (!aim) {
-        std::cerr << "Error loading pcl file\n";
-        std::cerr << '\t' << pi.getErrorString() << std::endl;
-        return 1;
-    }
 
     std::cout << "Loaded Pickled Alignment Incidence file " << input_filename << std::endl;
     std::vector<std::string> hap_names = aim->get_haplotype_names();

@@ -51,6 +51,14 @@ public:
                              std::vector<int> row_ptr,
                              std::vector<int> val);
 
+    AlignmentIncidenceMatrix(std::vector<std::string> haplotypes,
+                             std::vector<std::string> reads,
+                             std::vector<std::string> transcripts,
+                             std::vector<int> col_ind,
+                             std::vector<int> row_ptr,
+                             std::vector<int> val,
+                             std::vector<int> counts);
+
     ~AlignmentIncidenceMatrix();
 
 
