@@ -145,8 +145,7 @@ int main(int argc, char **argv)
 
     if (argc - optind == 1) {
         input_filename = argv[optind];
-    }
-    else {
+    } else {
         // TODO print error message
         print_help();
         return 1;
@@ -159,8 +158,13 @@ int main(int argc, char **argv)
 
     if (output_filename.empty()) {
         //use default, based on the input file name but placed in current working directdory
-        output_filename = input_filename.substr(0, input_filename.size() - extension.size()).append(".stacksum.tsv");
 
+        if (!binary_input) {
+            output_filename = input_filename.substr(0, input_filename.size() - extension.size()).append(".stacksum.tsv");
+        } else {
+           output_filename = input_filename;
+           output_filename.append(".stacksum.tsv");
+        }
         //check to see if there was a path in the input file name.  If so, trim it off
         std::size_t found = output_filename.rfind('/');
         if (found != std::string::npos) {
@@ -177,8 +181,7 @@ int main(int argc, char **argv)
             std::cerr << "Error loading binary input file\n";
             return 1;
         }
-    }
-    else {
+    } else {
         PythonInterface pi = PythonInterface();
         if (pi.init()){
             std::cerr << "Error importing TranscriptHits Python module.\n";
