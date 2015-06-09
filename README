@@ -14,11 +14,20 @@ and Gary Churchill
 What is EMASE2?
 
 EMASE2 is a software program written in C++ to quantify allele-specific
-expression and gene expression simultaneously from RNA-seq data.  EMASE2
-takes in a custom file format as input, which is constructed from the
-diploid transcriptome alignment BAM file and two text files containing
-transcript to gene mapping information using the provided bam_to_pcl.py
-script.
+expression and gene expression simultaneously from RNA-seq data.
+
+EMASE2 takes in one of two file formats as input.  One is a custom file format,
+which is constructed from the diploid transcriptome alignment BAM file and two
+text files containing transcript names and to transcript to gene mapping
+information using the provided bam_to_pcl.py script. See bam_to_pcl.py --help
+for more information.  The second file format is a binary file generated from
+Kallisto (a program for quantifying abundances of transcripts from RNA-Seq data)
+output.  
+
+The Kallisto exporter is available here:
+    https://github.com/churchill-lab/kallisto-export
+Kallisto is here:
+    https://github.com/pachterlab/kallisto
 
 EMASE2, a C++ version of EMASE, is still under development and is based on
 the Python prototype of EMASE which is available here:
