@@ -59,8 +59,6 @@ public:
                              std::vector<int> val,
                              std::vector<int> counts);
 
-    ~AlignmentIncidenceMatrix();
-
 
     inline std::vector<std::string>::size_type num_haplotypes() {
         return haplotype_names.size();
@@ -71,7 +69,7 @@ public:
     }
 
     inline std::vector<std::string>::size_type num_reads() {
-        return read_names.size();
+        return row_ptr.size() - 1;
     }
 
     inline std::vector<std::string> get_haplotype_names() {
@@ -86,15 +84,17 @@ public:
 
     void setGeneNames(std::vector<std::string> gene_names);
 
+    bool loadGeneMappings(std::string filename);
+
     inline int num_genes() {
-        return num_genes_;
+        return (int)gene_names.size();
     }
 
     inline bool has_gene_mappings() {
         return has_gene_mappings_;
     }
 
-    void loadTranscriptLengths(std::string path);
+    void loadTranscriptLengths(std::string filename);
 
 private:
 
@@ -116,12 +116,9 @@ private:
 
     std::vector<int> counts;
 
-    int *transcript_lengths_;
-
-    int num_genes_;
+    std::vector<int> transcript_lengths_;
 
     bool has_gene_mappings_;
-
 
 
     DISALLOW_COPY_AND_ASSIGN(AlignmentIncidenceMatrix);

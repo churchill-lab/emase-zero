@@ -498,7 +498,7 @@ bool SampleAllelicExpression::converged()
         sum += std::abs(current_[i] - previous_[i]);
     }
 
-    if (alignment_incidence_->transcript_lengths_) {
+    if (alignment_incidence_->transcript_lengths_.size() == alignment_incidence_->num_transcripts()) {
         if (sum < 0.0001 * 1000000) {
             return true;
         }
@@ -537,7 +537,7 @@ void SampleAllelicExpression::saveStackSums(std::string filename)
 void SampleAllelicExpression::applyTranscriptLength() {
     double sum = 0.0;
 
-    if (!alignment_incidence_->transcript_lengths_) {
+    if (alignment_incidence_->transcript_lengths_.size() == 0) {
         // didn't load transcript lengths, don't do anything
         return;
     }

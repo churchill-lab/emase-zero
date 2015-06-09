@@ -49,7 +49,7 @@ AlignmentIncidenceMatrix *loadFromBin(std::string filename)
     std::vector<int> row_ptr;
     std::vector<int> counts;
 
-    std::ifstream infile(filename);
+    std::ifstream infile(filename, std::ios::binary);
 
     int version;
     int num_transcripts;
@@ -68,6 +68,7 @@ AlignmentIncidenceMatrix *loadFromBin(std::string filename)
     }
 
     infile.read((char*)&version, sizeof(int));
+
 
     if (version == 0 || version == 1) {
 
@@ -105,28 +106,6 @@ AlignmentIncidenceMatrix *loadFromBin(std::string filename)
             haplotypes.push_back(std::string(buffer.data()));
         }
 
-        // load list of read/equiv class names
-        infile.read((char*)&num_reads, sizeof(int));
-        haplotypes.reserve(num_reads);
-
-        for (int i = 0; i < num_reads; i++) {
-            infile.read((char*)&size, sizeof(int));
-            buffer.clear();
-
-            for (int j = 0; j < size; j++) {
-                char c;
-                infile.read(&c, sizeof(c));
-                buffer.push_back(c);
-            }
-            buffer.push_back('\0');
-            reads.push_back(std::string(buffer.data()));
-        }
-
-        infile.read((char*)&num_alignments, sizeof(int));
-
-        values.reserve(num_alignments);
-        col_ind.reserve(num_alignments);
-
 
         if (version == 0) {
             // load alignments, use default counts of 1 per alignment
@@ -137,6 +116,29 @@ AlignmentIncidenceMatrix *loadFromBin(std::string filename)
             int value;
 
             int last_read = 0;
+
+            // load list of read names
+            infile.read((char*)&num_reads, sizeof(int));
+            reads.reserve(num_reads);
+
+            for (int i = 0; i < num_reads; i++) {
+                infile.read((char*)&size, sizeof(int));
+                buffer.clear();
+
+                for (int j = 0; j < size; j++) {
+                    char c;
+                    infile.read(&c, sizeof(c));
+                    buffer.push_back(c);
+                }
+                buffer.push_back('\0');
+                std::cout << std::string(buffer.data()) << std::endl;
+                reads.push_back(std::string(buffer.data()));
+            }
+
+            infile.read((char*)&num_alignments, sizeof(int));
+
+            values.reserve(num_alignments);
+            col_ind.reserve(num_alignments);
 
             // first read values start at index 0
             row_ptr.push_back(0);
@@ -167,14 +169,28 @@ AlignmentIncidenceMatrix *loadFromBin(std::string filename)
         }
         else {
             // load equivalence class, also includes counts
-            // format is "read_id transcript_id value count"
 
-            counts.reserve(num_alignments);
+
+            //XXX THIS IS WRONG.  FIX ME!
+
+
 
             int equivalence_id;
             int transcript_id;
             int value;
             int count;
+            int num_classes;
+
+            infile.read((char*)&num_classes, sizeof(int));
+            counts.resize(num_classes);
+            infile.read((char*)&counts[0], num_classes*sizeof(int));
+
+            infile.read((char*)&num_alignments, sizeof(int));
+
+            std::cout << num_classes << "  " << num_alignments << std::endl;
+
+            values.reserve(num_alignments);
+            col_ind.reserve(num_alignments);
 
             int last_ec = 0;
             row_ptr.push_back(0);
@@ -183,7 +199,8 @@ AlignmentIncidenceMatrix *loadFromBin(std::string filename)
                 infile.read((char*)&equivalence_id, sizeof(int));
                 infile.read((char*)&transcript_id, sizeof(int));
                 infile.read((char*)&value, sizeof(int));
-                infile.read((char*)&count, sizeof(int));
+
+                std::cout << equivalence_id << "  " << transcript_id << std::endl;
 
                 // sanity check that read_id is not less than last_read
                 if (equivalence_id < last_ec) {
@@ -212,7 +229,6 @@ AlignmentIncidenceMatrix *loadFromBin(std::string filename)
         std::cerr << "Binary input file is unknown format\n";
         return NULL;
     }
-
 
     return aim;
 }

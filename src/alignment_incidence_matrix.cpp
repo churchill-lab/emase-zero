@@ -47,9 +47,7 @@ AlignmentIncidenceMatrix::AlignmentIncidenceMatrix(std::vector<std::string> hapl
     row_ptr(row_ptr),
     val(val)
 {
-
     has_gene_mappings_ = false;
-    transcript_lengths_ = NULL;
 
     counts = std::vector<int>(reads.size(), 1);
 }
@@ -69,17 +67,9 @@ AlignmentIncidenceMatrix::AlignmentIncidenceMatrix(std::vector<std::string> hapl
     val(val),
     counts(counts)
 {
-
     has_gene_mappings_ = false;
-    transcript_lengths_ = NULL;
-
 }
 
-AlignmentIncidenceMatrix::~AlignmentIncidenceMatrix() {
-    if (transcript_lengths_) {
-        delete [] transcript_lengths_;
-    }
-}
 
 void AlignmentIncidenceMatrix::setGeneMappings(std::vector<int> tx_to_gene) {
     this->tx_to_gene = tx_to_gene;
@@ -88,11 +78,113 @@ void AlignmentIncidenceMatrix::setGeneMappings(std::vector<int> tx_to_gene) {
 
 void AlignmentIncidenceMatrix::setGeneNames(std::vector<std::string> gene_names) {
     this->gene_names = gene_names;
-    num_genes_ = (int)gene_names.size();
 }
 
-void AlignmentIncidenceMatrix::loadTranscriptLengths(std::string path) {
-    std::ifstream input(path);
+/*
+    This function reads in a file with the format described below and
+    initializes tx_to_gene (transcript ID to gene ID lookup table) and
+    gene_names (gene ID to gene name table)
+
+    format:
+    A tab-delimited file where the first field is the gene name, and the
+    remaining fields are the transcript names that are mapped to this gene.
+    gene_name\ttranscript_name_0\t...transcript_name_n
+
+    NOTE, this currently does not work with whitespace separators other than tab
+
+    Returns true if file is loaded sucessfully, false otherwise.
+
+    NOTE: for some error conditions we just print an error message and exit the
+    program. Future versions may return false for those errors, and the caller
+    will have to exit.
+ */
+bool AlignmentIncidenceMatrix::loadGeneMappings(std::string filename) {
+    std::map<std::string, int> transcript_name_to_id;
+    std::ifstream input(filename);
+
+    if (!input.is_open()) {
+        // something went wrong reading from stream for now just bail out
+        std::cerr << "ERROR LOADING GENE MAPPING FILE " << filename << std::endl;
+        exit(1);
+    }
+
+    // in most cases tx_to_gene and gene_names should already have size zero,
+    // but it is possible that a user would pass a mapping file while they are
+    // using a pcl.bz file that contained the mappings. In that case we'll load
+    // the mappings from the file and ignore the ones that were present in the
+    // pcl.bz file.
+    // We initialize all transcripts in tx_to_gene to map to -1, after loading
+    // the file, we will make sure there are no -1s in the table, which means
+    // that that transcript name was not included in the mapping file.
+    tx_to_gene.resize(num_transcripts(), -1);
+    gene_names.clear();
+
+
+    // build a map so we can lookup transcript IDs by transcript names
+    int t_index = 0;
+    for (auto it = transcript_names.begin(); it != transcript_names.end(); ++it) {
+        transcript_name_to_id[*it] = t_index++;
+    }
+
+    // read file
+    std::string line;
+    int gene_id = 0;
+    while (std::getline(input, line)) {
+        // first split the line on tabs
+        std::stringstream ss(line);
+        std::string item;
+        std::vector<std::string> tokens;
+
+        while (std::getline(ss, item, '\t')) {
+            if (!item.empty()) {
+                tokens.push_back(item);
+            }
+        }
+
+        // now we have a vector of tokens from this line.  The first token is
+        // the gene name,  the other tokens are the trascripts that belong to
+        // that gene
+        gene_names.push_back(tokens[0]);
+        for (int i = 1; i < tokens.size(); ++i) {
+            // make sure the transcript name is one we know about:
+            auto transcript_search = transcript_name_to_id.find(tokens[i]);
+
+            if (transcript_search == transcript_name_to_id.end()) {
+                // handle error condition.
+                // For now we will just print an error message and exit.
+
+                std::cerr << "ERROR LOADING GENE MAPPING FILE " << filename << std::endl
+                          << "UNKNOWN TRANSCRIPT ID: " << tokens[i] << std::endl;
+
+                exit(1);
+            }
+
+            // transcript is known, set its value to the gene_id
+            tx_to_gene[transcript_search->second] = gene_id;
+
+        }
+
+        ++gene_id;
+    }
+
+    bool bail = false;
+    for (int i = 0; i < tx_to_gene.size(); ++i) {
+        if (tx_to_gene[i] == -1) {
+            std::cerr << "No mapping information for " << transcript_names[i] << std::endl;
+            bail = true;
+        }
+    }
+
+    if (bail) {
+        exit(1);
+    }
+
+    has_gene_mappings_ = true;
+    return true;
+}
+
+void AlignmentIncidenceMatrix::loadTranscriptLengths(std::string filename) {
+    std::ifstream input(filename);
 
 
     // since we don't want to assume that the order the transcripts appear in
@@ -100,6 +192,12 @@ void AlignmentIncidenceMatrix::loadTranscriptLengths(std::string path) {
     // file we go through the pain of
     std::map<std::string, int> transcript_name_to_id;
     std::map<std::string, int> haplotype_name_to_id;
+
+    if (!input.is_open()) {
+        // something went wrong reading from stream for now just bail out
+        std::cerr << "ERROR LOADING TRANSCRIPT LENGHT FILE " << filename << std::endl;
+        exit(1);
+    }
 
     for (int i = 0; i < num_transcripts(); ++i) {
         transcript_name_to_id[transcript_names[i]] = i;
@@ -111,13 +209,7 @@ void AlignmentIncidenceMatrix::loadTranscriptLengths(std::string path) {
 
     int lengths_loaded = 0;
 
-    transcript_lengths_ = new int[num_transcripts() * num_haplotypes()];
-
-    if (!input.is_open()) {
-        // something went wrong reading from stream for now just bail out
-        std::cerr << "ERROR LOADING TRANSCRIPT LENGHT FILE " << path << std::endl;
-        exit(1);
-    }
+    transcript_lengths_.resize(num_transcripts() * num_haplotypes());
 
     int total_elements = num_transcripts() * num_haplotypes();
 
@@ -137,7 +229,7 @@ void AlignmentIncidenceMatrix::loadTranscriptLengths(std::string path) {
             // lengths file contained more transcripts than we expected.
             // for now, just bail out
 
-            std::cerr << "ERROR LOADING TRANSCRIPT LENGTH FILE " << path << std::endl
+            std::cerr << "ERROR LOADING TRANSCRIPT LENGTH FILE " << filename << std::endl
                       << "EXPECTED " << total_elements << " LENGTH VALUES BUT FILE CONTAINS MORE\n";
             exit(1);
 
@@ -150,7 +242,7 @@ void AlignmentIncidenceMatrix::loadTranscriptLengths(std::string path) {
             // continue without transcript lengths? For now we will just print
             // an error message and exit.
 
-            std::cerr << "ERROR LOADING TRANSCRIPT LENGTH FILE " << path << std::endl
+            std::cerr << "ERROR LOADING TRANSCRIPT LENGTH FILE " << filename << std::endl
                       << "UNKNOWN TRANSCRIPT ID: " << t_name << std::endl;
 
             exit(1);
@@ -159,7 +251,7 @@ void AlignmentIncidenceMatrix::loadTranscriptLengths(std::string path) {
         auto hap_search = haplotype_name_to_id.find(hap_name);
 
         if (hap_search == haplotype_name_to_id.end()) {
-            std::cerr << "ERROR LOADING TRANSCRIPT LENGTH FILE " << path << std::endl
+            std::cerr << "ERROR LOADING TRANSCRIPT LENGTH FILE " << filename << std::endl
                       << "UNKNOWN HAPLOTYPE NAME: " << hap_name << std::endl;
         }
 
@@ -170,14 +262,14 @@ void AlignmentIncidenceMatrix::loadTranscriptLengths(std::string path) {
 
     if (lengths_loaded != total_elements) {
         // didn't have enough transcripts in file.  for now, just bail out.
-        std::cerr << "ERROR LOADING TRANSCRIPT LENGHT FILE " << path << std::endl
+        std::cerr << "ERROR LOADING TRANSCRIPT LENGHT FILE " << filename << std::endl
                   << "EXPECTED " << total_elements << " VALUES BUT FILE CONTAINS FEWER\n";
         exit(1);
     }
 
     if (input.bad()) {
         // something went wrong reading from stream for now just bail out
-        std::cerr << "ERROR LOADING TRANSCRIPT LENGHT FILE " << path << std::endl;
+        std::cerr << "ERROR LOADING TRANSCRIPT LENGHT FILE " << filename << std::endl;
         exit(1);
     }
 }

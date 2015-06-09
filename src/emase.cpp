@@ -59,6 +59,7 @@ int main(int argc, char **argv)
     std::string output_filename;
     std::string transcript_length_file;
     std::string extension = ".pcl.bz2";
+    std::string gene_file;
 
     //getopt related variables
     int c;
@@ -73,10 +74,11 @@ int main(int argc, char **argv)
         {"transcript-lengths", required_argument, 0, 'l'},
         {"max-iterations", required_argument, 0, 'i'},
         {"bin", no_argument, 0, 'b'},
+        {"gene-mappings", required_argument, 0, 'g'},
         {0, 0, 0, 0}
     };
 
-    while ((c = getopt_long(argc, argv, "hm:o:k:l:i:b", long_options, &option_index)) != -1) {
+    while ((c = getopt_long(argc, argv, "hm:o:k:l:i:bg:", long_options, &option_index)) != -1) {
         switch (c) {
             case 'h':
                 print_help();
@@ -123,6 +125,10 @@ int main(int argc, char **argv)
 
             case 'b':
                 binary_input = true;
+                break;
+
+            case 'g':
+                gene_file = std::string(optarg);
                 break;
 
             case '?':
@@ -172,7 +178,7 @@ int main(int argc, char **argv)
             return 1;
         }
     }
-    else {    
+    else {
         PythonInterface pi = PythonInterface();
         if (pi.init()){
             std::cerr << "Error importing TranscriptHits Python module.\n";
@@ -191,7 +197,7 @@ int main(int argc, char **argv)
     }
 
 
-    std::cout << "Loaded Pickled Alignment Incidence file " << input_filename << std::endl;
+    std::cout << "Alignment Incidence file " << input_filename << std::endl;
     std::vector<std::string> hap_names = aim->get_haplotype_names();
 
     std::cout << "File had the following haplotype names:\n";
@@ -208,6 +214,11 @@ int main(int argc, char **argv)
     if (!transcript_length_file.empty()) {
         std::cout << "Loading Transcript Length File " << transcript_length_file << std::endl;
         aim->loadTranscriptLengths(transcript_length_file);
+    }
+
+    if (!gene_file.empty()) {
+        std::cout << "Loading Gene Mapping File " << gene_file << std::endl;
+        aim->loadGeneMappings(gene_file);
     }
 
     if (model != SampleAllelicExpression::MODEL_4 && !aim->has_gene_mappings()) {
