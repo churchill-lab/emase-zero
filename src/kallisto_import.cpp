@@ -194,8 +194,6 @@ AlignmentIncidenceMatrix *loadFromBin(std::string filename)
                 infile.read((char*)&transcript_id, sizeof(int));
                 infile.read((char*)&value, sizeof(int));
 
-                std::cout << equivalence_id << "  " << transcript_id << std::endl;
-
                 // sanity check that read_id is not less than last_read
                 if (equivalence_id < last_ec) {
                     // this is a problem with the file
