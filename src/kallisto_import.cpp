@@ -171,10 +171,6 @@ AlignmentIncidenceMatrix *loadFromBin(std::string filename)
             // load equivalence class, also includes counts
 
 
-            //XXX THIS IS WRONG.  FIX ME!
-
-
-
             int equivalence_id;
             int transcript_id;
             int value;
@@ -186,8 +182,6 @@ AlignmentIncidenceMatrix *loadFromBin(std::string filename)
             infile.read((char*)&counts[0], num_classes*sizeof(int));
 
             infile.read((char*)&num_alignments, sizeof(int));
-
-            std::cout << num_classes << "  " << num_alignments << std::endl;
 
             values.reserve(num_alignments);
             col_ind.reserve(num_alignments);
