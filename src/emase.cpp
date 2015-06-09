@@ -64,7 +64,7 @@ int main(int argc, char **argv)
     //getopt related variables
     int c;
     int option_index = 0;
-    int bad_args = 0;
+    bool bad_args = false;
 
     static struct option long_options[] = {
         {"help", no_argument, 0, 'h'},
@@ -132,7 +132,7 @@ int main(int argc, char **argv)
                 break;
 
             case '?':
-                bad_args++;
+                bad_args = true;
 
         }
     }
@@ -146,7 +146,7 @@ int main(int argc, char **argv)
     if (argc - optind == 1) {
         input_filename = argv[optind];
     } else {
-        // TODO print error message
+        std::cerr << "Missing required argument (input file name)\n";
         print_help();
         return 1;
     }
@@ -175,6 +175,7 @@ int main(int argc, char **argv)
 
 
     if (binary_input) {
+        std::cout << "Loading " << input_filename << "..." << std::endl;
         aim = loadFromBin(input_filename);
 
         if (!aim) {

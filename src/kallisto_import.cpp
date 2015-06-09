@@ -131,7 +131,6 @@ AlignmentIncidenceMatrix *loadFromBin(std::string filename)
                     buffer.push_back(c);
                 }
                 buffer.push_back('\0');
-                std::cout << std::string(buffer.data()) << std::endl;
                 reads.push_back(std::string(buffer.data()));
             }
 
