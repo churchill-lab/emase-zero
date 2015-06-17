@@ -226,7 +226,12 @@ int main(int argc, char **argv)
     }
 
     if (model != SampleAllelicExpression::MODEL_4 && !aim->has_gene_mappings()) {
-        std::cerr << "File does not contain transcript to gene mapping information.  Only normalization Model 4 can be used.\n";
+        if (!binary_input) {
+            std::cerr << "[ERROR] File does not contain transcript to gene mapping information.  Only normalization Model 4 can be used.\n";
+        }
+        else {
+            std::cerr << "[ERROR] Only model 4 is possible without gene to transcript information (--gene-mappings, -g). You specified another model.\n"
+        }
         return 1;
     }
 
@@ -266,7 +271,7 @@ void print_help()
               << "USAGE: emase2 [options] <alignment_incidence_file>\n\n"
               << "INPUT: Alignment Incidence file prepared with bam_to_pcl.py script\n\n"
               << "OPTIONS\n"
-              << "  --model (-m) : Specify normalization model (can be 1-4, default=2)\n"
+              << "  --model (-m) : Specify normalization model (can be 1-4, default=1)\n"
               << "  --bin (-b) : Binary input mode, with this option emase2 will expect a binary\n"
               << "               file exported from Kallisto as input\n"
               << "  --output (-o) : Specify filename for output file (default is\n"

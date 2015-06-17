@@ -40,7 +40,7 @@ public:
 
     SampleAllelicExpression(AlignmentIncidenceMatrix *alignment_incidence, int read_length);
     ~SampleAllelicExpression();
-    void update(model m = MODEL_2);
+    void update(model m = MODEL_1);
     bool converged();
     inline int size() {return num_haplotypes * num_transcripts;}
     void saveStackSums(std::string filename);
