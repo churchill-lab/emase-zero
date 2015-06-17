@@ -230,7 +230,7 @@ int main(int argc, char **argv)
             std::cerr << "[ERROR] File does not contain transcript to gene mapping information.  Only normalization Model 4 can be used.\n";
         }
         else {
-            std::cerr << "[ERROR] Only model 4 is possible without gene to transcript information (--gene-mappings, -g). You specified another model.\n"
+            std::cerr << "[ERROR] Only model 4 is possible without gene to transcript information (--gene-mappings, -g). You specified another model.\n";
         }
         return 1;
     }
