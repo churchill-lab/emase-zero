@@ -21,13 +21,28 @@ which is constructed from the diploid transcriptome alignment BAM file and two
 text files containing transcript names and to transcript to gene mapping
 information using the provided bam_to_pcl.py script. See bam_to_pcl.py --help
 for more information.  The second file format is a binary file generated from
-Kallisto (a program for quantifying abundances of transcripts from RNA-Seq data)
-output.  
+a modified version of Kallisto (a program for quantifying abundances of 
+transcripts from RNA-Seq data) called kallisto-export.  Input files produced by
+kallisto-export are now the preferred format. 
 
-The Kallisto exporter is available here:
+kallisto-export is available here:
     https://github.com/churchill-lab/kallisto-export
 Kallisto is here:
     https://github.com/pachterlab/kallisto
+
+Some normalization models require gene to transcript mapping information. This 
+information can be added into the .pcl.bz file, or passed on the command line
+using the --gene-mappings (-g) option. This option takes a filename as an
+argument and the file has one tab separated line per gene where the first field
+is the gene ID and all remaining fields are transcript IDs that belong to that
+gene. With the Kallisto binary file, this command line option is the only way to 
+specify gene to transcript mappings. It is an error if the gene mapping file 
+contains a transcript name not present in the input file, or if it is missing a
+transcript that is present in the input file. 
+
+EMASE2 can also adjust for transcript length. To use this feature, you would
+pass a file containing the length of each transcript for each haplotype. The 
+format of each line is 'TranscriptName_HaplotypeName\tlenght'
 
 EMASE2, a C++ version of EMASE, is still under development and is based on
 the Python prototype of EMASE which is available here:
