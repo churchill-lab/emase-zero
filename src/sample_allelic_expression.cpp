@@ -522,17 +522,18 @@ void SampleAllelicExpression::saveStackSums(std::string filename)
     for (int i = 0; i < num_haplotypes; i++) {
         outfile << '\t' << alignment_incidence_->haplotype_names[i];
     }
-    outfile << std::endl;
+    outfile << '\t' << "sum" << std::endl;
 
+    double sum;
     for (int i = 0; i < num_transcripts; i++) {
+        sum = 0.0;
         outfile << alignment_incidence_->transcript_names[i] << "\t";
         for (int j = 0; j < num_haplotypes;  j++) {
             outfile << current_[i * num_haplotypes + j];
-            if (j != num_haplotypes - 1) {
-                outfile << "\t";
-            }
+            sum += current_[i * num_haplotypes + j];
+            outfile << '\t';
         }
-        outfile << std::endl;
+        outfile << sum << std::endl;
     }
 }
 
