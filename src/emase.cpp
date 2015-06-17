@@ -36,6 +36,8 @@
 #include "python_interface.h"
 #include "kallisto_import.h"
 
+#define VERSION "0.1.0"
+
 void print_help();
 
 
@@ -75,10 +77,11 @@ int main(int argc, char **argv)
         {"max-iterations", required_argument, 0, 'i'},
         {"bin", no_argument, 0, 'b'},
         {"gene-mappings", required_argument, 0, 'g'},
+        {"version", no_argument, 0, 'v'},
         {0, 0, 0, 0}
     };
 
-    while ((c = getopt_long(argc, argv, "hm:o:k:l:i:bg:", long_options, &option_index)) != -1) {
+    while ((c = getopt_long(argc, argv, "hm:o:k:l:i:bg:v", long_options, &option_index)) != -1) {
         switch (c) {
             case 'h':
                 print_help();
@@ -87,7 +90,7 @@ int main(int argc, char **argv)
             case 'm':
                 m = std::stoi(optarg);
                 if (m < 1 || m > 4) {
-                    std::cerr << "Invalid model number specified. Valid options: 1, 2, 3, 4\n";
+                    std::cerr << "[ERROR] Invalid model number specified. Valid options: 1, 2, 3, 4\n";
                 }
 
                 switch (m) {
@@ -131,6 +134,9 @@ int main(int argc, char **argv)
                 gene_file = std::string(optarg);
                 break;
 
+            case 'v':
+               std::cout << VERSION << std::endl;
+               return 0;
             case '?':
                 bad_args = true;
 
@@ -146,13 +152,13 @@ int main(int argc, char **argv)
     if (argc - optind == 1) {
         input_filename = argv[optind];
     } else {
-        std::cerr << "Missing required argument (input file name)\n";
+        std::cerr << "\n[ERROR] Missing required argument (input file name)\n";
         print_help();
         return 1;
     }
 
     if (!binary_input && (extension.size() >= input_filename.size() || !std::equal(extension.rbegin(), extension.rend(), input_filename.rbegin()))) {
-        std::cerr << "Error, expected file with .pcl.bz2 extension. Input file should be prepared with bam_to_pcl.py script.\n";
+        std::cerr << "\n[ERROR] Expected file with .pcl.bz2 extension. Input file should be prepared with bam_to_pcl.py script.\n";
         return 1;
     }
 
@@ -265,27 +271,36 @@ int main(int argc, char **argv)
 
 void print_help()
 {
+    std::string title = "EMASE Version " VERSION " Help";
+
     std::cout << std::endl << std::endl
-              << "EMASE Help\n"
-              << "----------\n\n"
+              << title << std::endl
+              << std::string(title.length(), '-') << std::endl << std::endl
               << "USAGE: emase2 [options] <alignment_incidence_file>\n\n"
-              << "INPUT: Alignment Incidence file prepared with bam_to_pcl.py script\n\n"
+              << "INPUT: Alignment Incidence file prepared with bam_to_pcl.py script or\n"
+              << "       with kallisto-export (https://github.com/churchill-lab/kallisto-export)\n\n"
               << "OPTIONS\n"
-              << "  --model (-m) : Specify normalization model (can be 1-4, default=1)\n"
-              << "  --bin (-b) : Binary input mode, with this option emase2 will expect a binary\n"
-              << "               file exported from Kallisto as input\n"
-              << "  --output (-o) : Specify filename for output file (default is\n"
-              << "                  input_basename.stacksum.tsv)\n"
-              << "  --transcript-lengths (-l) : Filename for transcript length file. Format is\n"
-              << "                             \"transcript_id\tlength\"\n"
-              << "  --gene-mappings (-g) : Filename containing transcript to gene mapping. Tab\n"
-              << "                         delimited file where the first field is the gene ID,\n"
-              << "                         all other fields are the transcript IDs that belong\n"
-              << "                         to that gene\n"
-              << "  --read-length (-k) : Specify read length for use when applying transcript\n"
-              << "                       length adjustment. Ignored unless combined with\n"
-              << "                       --transcript-lengths. (Default 100)\n"
-              << "  --max-iterations (-i) : Specify the maximum number of EM iterations.\n"
-              << "                          (Default 200)\n"
-              << "  --help (-h) : Print this message and exit\n\n";
+              << "  --model (-m) <int>:\n"
+              << "      Specify normalization model (can be 1-4, default=1)\n\n"
+              << "  --bin (-b):\n"
+              << "      Binary input mode, with this option emase2 will expect a binary\n"
+              << "      file exported from Kallisto as input\n\n"
+              << "  --output (-o) <filename>:\n"
+              << "      Specify filename for output file (default is input_basename.stacksum.tsv)\n\n"
+              << "  --transcript-lengths (-l) <filename>:\n"
+              << "      Filename for transcript length file. Format of each line is\n"
+              << "     \"TranscriptName_HaplotypeName\\tlength\"\n\n"
+              << "  --gene-mappings (-g) <filename>:\n"
+              << "      Filename containing transcript to gene mapping. Tab delimited file where\n"
+              << "      the first field is the gene ID, all other fields are the transcript IDs\n"
+              << "      that belong to that gene\n\n"
+              << "  --read-length (-k) <int>:\n"
+              << "      Specify read length for use when applying transcript length adjustment.\n"
+              << "      Ignored unless combined with --transcript-lengths. (Default 100)\n\n"
+              << "  --max-iterations (-i) <int>:\n"
+              << "      Specify the maximum number of EM iterations. (Default 200)\n\n"
+              << "  --version (-v):\n"
+              << "      Print the version and exit\n\n"
+              << "  --help (-h):\n"
+              << "      Print this message and exit\n\n";
 }
