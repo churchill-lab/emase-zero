@@ -126,7 +126,10 @@ void SampleAllelicExpression::init_normalize_read()
                 double *tmp = working_;
                 working_ = new double[working_size * 2];
                 std::copy(tmp, tmp + working_size, working_);
-                free_slots += working_size;
+
+                // increased capacity by working_size, so we have working_size
+                // free slots now (was full).
+                free_slots = working_size;
                 working_size *= 2;
                 delete tmp;
             }
@@ -155,7 +158,7 @@ void SampleAllelicExpression::init_normalize_read()
         for (long j = alignment_incidence_->row_ptr[i]; j < alignment_incidence_->row_ptr[i+1]; ++j) {
             start_index = alignment_incidence_->col_ind[j] * num_haplotypes;
             for (int k = 0; k < num_haplotypes; ++k) {
-                current_[start_index + k] += (working_[work_index++] / read_sum) * alignment_incidence_->counts[i];
+                current_[start_index + k] += (working_[work_index++] / read_sum) * (double)alignment_incidence_->counts[i];
             }
         }
     }
@@ -418,7 +421,7 @@ void SampleAllelicExpression::updateModel2()
 
         work_index = 0;
         for (long j = alignment_incidence_->row_ptr[i]; j < alignment_incidence_->row_ptr[i+1]; ++j) {
-            float isoform_specificity = transcript_sums_[alignment_incidence_->col_ind[j]] / gene_sum_hits_only_[alignment_incidence_->tx_to_gene[alignment_incidence_->col_ind[j]]];
+            double isoform_specificity = transcript_sums_[alignment_incidence_->col_ind[j]] / gene_sum_hits_only_[alignment_incidence_->tx_to_gene[alignment_incidence_->col_ind[j]]];
             for (int k = 0; k < num_haplotypes; ++k) {
                 working_[work_index] *= isoform_specificity * gene_sums_[alignment_incidence_->tx_to_gene[alignment_incidence_->col_ind[j]]];
 
@@ -457,7 +460,7 @@ void SampleAllelicExpression::updateModel4()
 
     int start_index;
     int work_index;
-    float read_sum;
+    double read_sum;
     auto end = alignment_incidence_->row_ptr.size() - 1;
 
     //iterate over each read
