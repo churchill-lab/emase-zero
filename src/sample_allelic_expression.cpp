@@ -330,7 +330,7 @@ void SampleAllelicExpression::updateModel1()
                 start_index = alignment_incidence_->col_ind[j] * num_haplotypes;
 
                 for (int k = 0; k < num_haplotypes; ++k) {
-                    current_[start_index + k] += (working_[work_index] / read_sum) * alignment_incidence_->counts[i];
+                    current_[start_index + k] += (working_[work_index] / read_sum) * (double)alignment_incidence_->counts[i];
                     work_index++;
                 }
             }
@@ -443,7 +443,7 @@ void SampleAllelicExpression::updateModel2()
         for (long j = alignment_incidence_->row_ptr[i]; j < alignment_incidence_->row_ptr[i+1]; ++j) {
             start_index = alignment_incidence_->col_ind[j] * num_haplotypes;
             for (int k = 0; k < num_haplotypes; ++k) {
-                current_[start_index + k] += (working_[work_index++] / read_sum)  * alignment_incidence_->counts[i];
+                current_[start_index + k] += (working_[work_index++] / read_sum)  * (double)alignment_incidence_->counts[i];
             }
         }
     }
@@ -488,7 +488,7 @@ void SampleAllelicExpression::updateModel4()
         for (long j = alignment_incidence_->row_ptr[i]; j < alignment_incidence_->row_ptr[i+1]; ++j) {
             start_index = alignment_incidence_->col_ind[j] * num_haplotypes;
             for (int k = 0; k < num_haplotypes; ++k) {
-                current_[start_index + k] += (working_[work_index++] / read_sum)  * alignment_incidence_->counts[i];
+                current_[start_index + k] += (working_[work_index++] / read_sum)  * (double)alignment_incidence_->counts[i];
             }
         }
     }
