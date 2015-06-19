@@ -48,7 +48,7 @@ int main(int argc, char **argv)
     bool binary_input = false;
 
     int num_iterations;
-    int max_iterations = 200;
+    int max_iterations = 999;
     int read_length = 100;
 
     SampleAllelicExpression::model model = SampleAllelicExpression::MODEL_2;
@@ -311,7 +311,7 @@ void print_help()
               << "      Specify read length for use when applying transcript length adjustment.\n"
               << "      Ignored unless combined with --transcript-lengths. (Default 100)\n\n"
               << "  --max-iterations (-i) <int>:\n"
-              << "      Specify the maximum number of EM iterations. (Default 200)\n\n"
+              << "      Specify the maximum number of EM iterations. (Default 999)\n\n"
               << "  --tolerance (-t) <double>:\n"
               << "      Specify the convergence threshold. emase2 will terminate when\n"
               << "      the sum of the aboslute value of differences in the stack sum from\n"

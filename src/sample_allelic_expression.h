@@ -38,7 +38,7 @@ public:
 
     enum model {MODEL_1 = 1, MODEL_2 = 2, MODEL_4 = 4};
 
-    SampleAllelicExpression(AlignmentIncidenceMatrix *alignment_incidence, int read_length=200, double tolerance=0.0);
+    SampleAllelicExpression(AlignmentIncidenceMatrix *alignment_incidence, int read_length=100, double tolerance=0.0);
     ~SampleAllelicExpression();
     void update(model m = MODEL_1);
     bool converged();
