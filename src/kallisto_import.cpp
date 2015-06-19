@@ -115,7 +115,6 @@ AlignmentIncidenceMatrix *loadFromBin(std::string filename)
             int transcript_id;
             int value;
 
-            int last_read = 0;
 
             // load list of read names
             infile.read((char*)&num_reads, sizeof(int));
@@ -141,6 +140,7 @@ AlignmentIncidenceMatrix *loadFromBin(std::string filename)
 
             // first read values start at index 0
             row_ptr.push_back(0);
+            int last_read = 0;
 
             for (int i = 0; i < num_alignments; ++i) {
                 infile.read((char*)&read_id, sizeof(int));
@@ -164,6 +164,7 @@ AlignmentIncidenceMatrix *loadFromBin(std::string filename)
                     last_read = read_id;
                 }
             }
+            row_ptr.push_back(num_alignments);
             aim = new AlignmentIncidenceMatrix(haplotypes, reads, transcripts, col_ind, row_ptr, values);
         }
         else {
@@ -172,7 +173,6 @@ AlignmentIncidenceMatrix *loadFromBin(std::string filename)
             int equivalence_id;
             int transcript_id;
             int value;
-            int count;
             int num_classes;
 
             infile.read((char*)&num_classes, sizeof(int));
@@ -211,6 +211,7 @@ AlignmentIncidenceMatrix *loadFromBin(std::string filename)
                     last_ec = equivalence_id;
                 }
             }
+            row_ptr.push_back(num_alignments);
             aim = new AlignmentIncidenceMatrix(haplotypes, reads, transcripts,
                                                col_ind, row_ptr, values,
                                                counts);

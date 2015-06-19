@@ -68,8 +68,12 @@ public:
         return transcript_names.size();
     }
 
-    inline std::vector<std::string>::size_type num_reads() {
+    inline std::vector<std::string>::size_type num_alignment_classes() {
         return row_ptr.size() - 1;
+    }
+
+    inline std::vector<std::string>::size_type total_reads() {
+        return total_reads_;
     }
 
     inline std::vector<std::string> get_haplotype_names() {
@@ -92,6 +96,10 @@ public:
 
     inline bool has_gene_mappings() {
         return has_gene_mappings_;
+    }
+
+    inline bool has_equivalence_classes() {
+        return has_equivalence_classes_;
     }
 
     void loadTranscriptLengths(std::string filename);
@@ -120,6 +128,9 @@ private:
 
     bool has_gene_mappings_;
 
+    bool has_equivalence_classes_;
+
+    long total_reads_;
 
     DISALLOW_COPY_AND_ASSIGN(AlignmentIncidenceMatrix);
 };

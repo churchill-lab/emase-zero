@@ -216,7 +216,12 @@ int main(int argc, char **argv)
     }
     std::cout << std::endl;
 
-    std::cout << aim->num_reads() << " reads loaded\n";
+    if (aim->has_equivalence_classes()) {
+        std::cout << aim->num_alignment_classes() << " alignment classes loaded (" << aim->total_reads() << " total reads)\n";
+    }
+    else {
+        std::cout << aim->total_reads() << " reads loaded\n";
+    }
     std::cout << aim->num_transcripts() << " transcripts\n";
 
     std::cout << std::endl;

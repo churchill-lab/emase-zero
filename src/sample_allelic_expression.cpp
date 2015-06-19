@@ -508,7 +508,7 @@ bool SampleAllelicExpression::converged()
             return true;
         }
     }
-    else if (sum < 0.001 * alignment_incidence_->num_reads()) {
+    else if (sum < 0.001 * alignment_incidence_->total_reads()) {
         return true;
     }
 

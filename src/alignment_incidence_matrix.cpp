@@ -48,8 +48,9 @@ AlignmentIncidenceMatrix::AlignmentIncidenceMatrix(std::vector<std::string> hapl
     val(val)
 {
     has_gene_mappings_ = false;
-
-    counts = std::vector<int>(reads.size(), 1);
+    has_equivalence_classes_ = false;
+    total_reads_ = row_ptr.size() - 1;
+    counts = std::vector<int>(total_reads_, 1);
 }
 
 AlignmentIncidenceMatrix::AlignmentIncidenceMatrix(std::vector<std::string> haplotypes,
@@ -68,6 +69,12 @@ AlignmentIncidenceMatrix::AlignmentIncidenceMatrix(std::vector<std::string> hapl
     counts(counts)
 {
     has_gene_mappings_ = false;
+    has_equivalence_classes_ = true;
+
+    total_reads_ = 0;
+    for (auto it = counts.begin(); it != counts.end(); ++it) {
+        total_reads_ += *it;
+    }
 }
 
 
