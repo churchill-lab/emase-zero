@@ -68,6 +68,8 @@ int main(int argc, char **argv)
     int option_index = 0;
     bool bad_args = false;
 
+    double tolerance = 0.0;
+
     static struct option long_options[] = {
         {"help", no_argument, 0, 'h'},
         {"model", required_argument, 0, 'm'},
@@ -78,10 +80,11 @@ int main(int argc, char **argv)
         {"bin", no_argument, 0, 'b'},
         {"gene-mappings", required_argument, 0, 'g'},
         {"version", no_argument, 0, 'v'},
+        {"converge", required_argument, 0, 'c'},
         {0, 0, 0, 0}
     };
 
-    while ((c = getopt_long(argc, argv, "hm:o:k:l:i:bg:v", long_options, &option_index)) != -1) {
+    while ((c = getopt_long(argc, argv, "hm:o:k:l:i:bg:vc:", long_options, &option_index)) != -1) {
         switch (c) {
             case 'h':
                 print_help();
@@ -137,6 +140,11 @@ int main(int argc, char **argv)
             case 'v':
                std::cout << VERSION << std::endl;
                return 0;
+
+            case 'c':
+                tolerance = std::stod(optarg);
+                break;
+
             case '?':
                 bad_args = true;
 
@@ -247,7 +255,7 @@ int main(int argc, char **argv)
     }
 
     t1 = clock();
-    SampleAllelicExpression sae(aim, read_length);
+    SampleAllelicExpression sae(aim, read_length, tolerance);
     t2 = clock();
     diff = ((float)t2-(float)t1)/CLOCKS_PER_SEC;
     std::cout << "Time for initializing stack sum = " << diff << "s" << std::endl;
@@ -304,6 +312,11 @@ void print_help()
               << "      Ignored unless combined with --transcript-lengths. (Default 100)\n\n"
               << "  --max-iterations (-i) <int>:\n"
               << "      Specify the maximum number of EM iterations. (Default 200)\n\n"
+              << "  --converge (-c) <double>:\n"
+              << "      Specify the convergence threshold. emase2 will terminate when\n"
+              << "      the sum of the aboslute value of differences in the stack sum from\n"
+              << "      one iteration to the next is lower than this value. (Default = 100\n"
+              << "      when adjusting for transcript lengths, 0.001 * num_reads otherwise)\n\n"
               << "  --version (-v):\n"
               << "      Print the version and exit\n\n"
               << "  --help (-h):\n"
