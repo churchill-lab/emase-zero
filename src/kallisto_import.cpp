@@ -196,7 +196,7 @@ AlignmentIncidenceMatrix *loadFromBin(std::string filename)
                 if (equivalence_id < last_ec) {
                     // this is a problem with the file
                     // XXX version 1 files are small enough that we could
-                    // probably read this all in and then sort it, and then 
+                    // probably read this all in and then sort it, and then
                     // iterate over it and build the CRS representation.
                     std::cerr << "ERROR: binary input file must be sorted\n";
                     return NULL;
@@ -204,7 +204,6 @@ AlignmentIncidenceMatrix *loadFromBin(std::string filename)
 
                 values.push_back(value);
                 col_ind.push_back(transcript_id);
-                counts.push_back(count);
 
                 if (equivalence_id != last_ec) {
                     // record the start index when we transition to a new read
