@@ -1,5 +1,5 @@
-EMASE2 README File
------------------
+EMASE-Zero README File
+----------------------
 
 
 Overview
@@ -11,14 +11,14 @@ Narayanan Raghupathy, Kwangbom Choi, Steve Munger, Glen Beane, Al Simons,
 and Gary Churchill
 
 
-What is EMASE2?
+What is EMASE-Zero?
 
-EMASE2 is a software program written in C++ to quantify allele-specific
+EMASE-Zero is a software program written in C++ to quantify allele-specific
 expression and gene expression simultaneously from RNA-seq data.
 
-EMASE2 takes in one of two file formats as input.  One is a custom file format,
-which is constructed from the diploid transcriptome alignment BAM file and two
-text files containing transcript names and to transcript to gene mapping
+EMASE-Zero takes in one of two file formats as input.  One is a custom file
+format, which is constructed from the diploid transcriptome alignment BAM file
+and two text files containing transcript names and to transcript to gene mapping
 information using the provided bam_to_pcl.py script. See bam_to_pcl.py --help
 for more information.  The second file format is a binary file generated from
 a modified version of Kallisto (a program for quantifying abundances of 
@@ -40,11 +40,11 @@ specify gene to transcript mappings. It is an error if the gene mapping file
 contains a transcript name not present in the input file, or if it is missing a
 transcript that is present in the input file. 
 
-EMASE2 can also adjust for transcript length. To use this feature, you would
+EMASE-Zero can also adjust for transcript length. To use this feature, you would
 pass a file containing the length of each transcript for each haplotype. The 
 format of each line is 'TranscriptName_HaplotypeName\tlenght'
 
-EMASE2, a C++ version of EMASE, is still under development and is based on
+EMASE-Zero, a C++ version of EMASE, is still under development and is based on
 the Python prototype of EMASE which is available here:
 https://github.com/churchill-lab/emase
 
@@ -67,7 +67,7 @@ Please see the included INSTALL file.
 To Do
 -----
 
-EMASE2 is still under development.  Here are some of the things we have
+EMASE-Zero is still under development.  Here are some of the things we have
 planned:
 
  * multi-threading

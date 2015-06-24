@@ -20,7 +20,7 @@
 
 
 //
-//  populase.cpp
+//  emase.cpp
 //
 //
 //  Created by Glen Beane on 8/20/14.
@@ -284,12 +284,12 @@ int main(int argc, char **argv)
 
 void print_help()
 {
-    std::string title = "EMASE Version " VERSION " Help";
+    std::string title = "EMASE-Zero Version " VERSION " Help";
 
     std::cout << std::endl << std::endl
               << title << std::endl
               << std::string(title.length(), '-') << std::endl << std::endl
-              << "USAGE: emase2 [options] <alignment_incidence_file>\n\n"
+              << "USAGE: emase-zero [options] <alignment_incidence_file>\n\n"
               << "INPUT: Alignment Incidence file prepared with bam_to_pcl.py script or\n"
               << "       with kallisto-export (https://github.com/churchill-lab/kallisto-export)\n\n"
               << "OPTIONS\n"
