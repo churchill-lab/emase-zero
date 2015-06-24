@@ -36,7 +36,7 @@ class SampleAllelicExpression {
 
 public:
 
-    enum model {MODEL_1 = 1, MODEL_2 = 2, MODEL_4 = 4};
+    enum model {MODEL_1 = 1, MODEL_2 = 2, MODEL_3 = 3, MODEL_4 = 4};
 
     SampleAllelicExpression(AlignmentIncidenceMatrix *alignment_incidence, int read_length=100, double tolerance=0.0);
     ~SampleAllelicExpression();
@@ -60,6 +60,7 @@ private:
     double *transcript_sums_;
     double *gene_sum_by_strain_;
     double *gene_sum_by_strain_hits_only_;
+    double *read_sum_by_gene_;
 
     int *gene_masks_;
 
@@ -74,6 +75,7 @@ private:
 
     void updateModel1();
     void updateModel2();
+    void updateModel3();
     void updateModel4();
 
     DISALLOW_COPY_AND_ASSIGN(SampleAllelicExpression);

@@ -43,7 +43,6 @@ SampleAllelicExpression::SampleAllelicExpression(AlignmentIncidenceMatrix *align
     current_ = new double[size()];
     previous_ = new double[size()];
 
-    gene_sums_ = new double[alignment_incidence->num_genes()];
     gene_sum_hits_only_ = new double[alignment_incidence->num_genes()];
     transcript_sums_ = new double[num_transcripts];
 
@@ -51,10 +50,12 @@ SampleAllelicExpression::SampleAllelicExpression(AlignmentIncidenceMatrix *align
     // maximum number of transcripts with hits in a single read
     working_ = NULL;
 
-    // only used by some normalization modes,  allocate if required.
+    // only used by some normalization modes, will allocate if required.
+    gene_sums_ = NULL;
     gene_sum_by_strain_ = NULL;
     gene_sum_by_strain_hits_only_ = NULL;
     gene_masks_ = NULL;
+    read_sum_by_gene_ = NULL;
 
     init();
 }
@@ -63,12 +64,15 @@ SampleAllelicExpression::~SampleAllelicExpression()
 {
     delete [] current_;
     delete [] previous_;
-    delete [] gene_sums_;
     delete [] gene_sum_hits_only_;
     delete [] transcript_sums_;
 
     if (working_) {
         delete [] working_;
+    }
+
+    if (gene_sums_) {
+        delete [] gene_sums_;
     }
 
     if (gene_sum_by_strain_) {
@@ -81,6 +85,10 @@ SampleAllelicExpression::~SampleAllelicExpression()
 
     if (gene_masks_) {
         delete [] gene_masks_;
+    }
+
+    if (read_sum_by_gene_) {
+        delete [] read_sum_by_gene_;
     }
 }
 
@@ -177,6 +185,10 @@ void SampleAllelicExpression::update(SampleAllelicExpression::model m)
             updateModel2();
             break;
 
+        case MODEL_3:
+            updateModel3();
+            break;
+
         case MODEL_4:
             updateModel4();
             break;
@@ -194,6 +206,11 @@ void SampleAllelicExpression::updateModel1()
 
     double read_sum;
     auto end = alignment_incidence_->row_ptr.size() - 1;
+
+
+    if (!gene_sums_) {
+        gene_sums_ =  new double[alignment_incidence_->num_genes()];
+    }
 
     // allocate some extra working memory needed by this model
     if (!gene_sum_by_strain_) {
@@ -354,6 +371,11 @@ void SampleAllelicExpression::updateModel2()
     double read_sum;
     auto end = alignment_incidence_->row_ptr.size() - 1;
 
+
+    if (!gene_sums_) {
+        gene_sums_ =  new double[alignment_incidence_->num_genes()];
+    }
+
     // generate transcript sums from previous value
     for (int i = 0; i < num_transcripts; ++i) {
         transcript_sums_[i] = 0.0;
@@ -449,6 +471,110 @@ void SampleAllelicExpression::updateModel2()
     }
 }
 
+
+void SampleAllelicExpression::updateModel3()
+{
+
+    long start_index;
+    int work_index;
+    double read_sum;
+    auto end = alignment_incidence_->row_ptr.size() - 1;
+
+    if (!read_sum_by_gene_) {
+        read_sum_by_gene_ = new double[alignment_incidence_->num_genes()];
+    }
+
+    if (!gene_sums_) {
+        gene_sums_ =  new double[alignment_incidence_->num_genes()];
+    }
+
+    std::swap(current_, previous_);
+    std::fill(current_, current_ + size(), 0.0);
+
+    // generate transcript sums from previous value
+    for (int i = 0; i < num_transcripts; ++i) {
+        transcript_sums_[i] = 0.0;
+        for (int j = 0; j < num_haplotypes; ++j) {
+            transcript_sums_[i] += previous_[i*num_haplotypes + j];
+        }
+    }
+
+    // generate gene sums from previous value
+    std::fill(gene_sums_, gene_sums_ + alignment_incidence_->num_genes(), 0.0);
+    double genes_total = 0.0;
+    for (int i = 0; i < num_transcripts; ++i) {
+        gene_sums_[alignment_incidence_->tx_to_gene[i]] += transcript_sums_[i];
+        genes_total += transcript_sums_[i];
+    }
+
+    // normalize gene_sums_
+    for (int i = 0; i < alignment_incidence_->num_genes(); i++) {
+        gene_sums_[i] /= genes_total;
+    }
+
+
+    //iterate over each read
+    for (int i = 0; i != end; ++i) {
+
+
+        read_sum = 0.0;
+
+        for (long j = alignment_incidence_->row_ptr[i]; j < alignment_incidence_->row_ptr[i+1]; ++j) {
+            // make sure read_sum_by_gene_ is initialized to zero for any gene that has a hit for this read
+            read_sum_by_gene_[alignment_incidence_->tx_to_gene[alignment_incidence_->col_ind[j]]] = 0.0;
+        }
+
+        work_index = 0;
+        for (long j = alignment_incidence_->row_ptr[i]; j < alignment_incidence_->row_ptr[i+1]; ++j) {
+
+            gene_sum_hits_only_[alignment_incidence_->tx_to_gene[alignment_incidence_->col_ind[j]]] = 0.0;
+
+            start_index = alignment_incidence_->col_ind[j] * num_haplotypes;
+            for (int k = 0; k < num_haplotypes; ++k) {
+                // initialize all strains at this locus
+                if (alignment_incidence_->val[j] & (1 << k)) {
+                    working_[work_index++] = previous_[start_index + k];
+                    read_sum_by_gene_[alignment_incidence_->tx_to_gene[alignment_incidence_->col_ind[j]]] += previous_[start_index + k];
+                }
+                else {
+                    working_[work_index++] = 0.0;
+                }
+            }
+        }
+
+        work_index = 0;
+        for (long j = alignment_incidence_->row_ptr[i]; j < alignment_incidence_->row_ptr[i+1]; ++j) {
+
+            for (int k = 0; k < num_haplotypes; ++k) {
+                if (alignment_incidence_->val[j] & (1 << k)) {
+                    working_[work_index] /= read_sum_by_gene_[alignment_incidence_->tx_to_gene[alignment_incidence_->col_ind[j]]];
+                    working_[work_index] *= gene_sums_[alignment_incidence_->tx_to_gene[alignment_incidence_->col_ind[j]]];
+
+                    if (working_[work_index] != working_[work_index]) {
+                        // nan! underflow!
+
+                        // set to zero
+                        working_[work_index] = 0.0;
+
+                        // skip this location next time
+                        alignment_incidence_->val[j] &= ~(1 << k);
+                    }
+                }
+                read_sum += working_[work_index++];
+
+            }
+        }
+
+        work_index = 0;
+        for (long j = alignment_incidence_->row_ptr[i]; j < alignment_incidence_->row_ptr[i+1]; ++j) {
+            start_index = alignment_incidence_->col_ind[j] * num_haplotypes;
+            for (int k = 0; k < num_haplotypes; ++k) {
+                current_[start_index + k] += (working_[work_index++] / read_sum)  * (double)alignment_incidence_->counts[i];
+            }
+        }
+
+    }
+}
 
 void SampleAllelicExpression::updateModel4()
 {

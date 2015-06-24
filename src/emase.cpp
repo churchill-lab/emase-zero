@@ -104,8 +104,8 @@ int main(int argc, char **argv)
                         model = SampleAllelicExpression::MODEL_2;
                         break;
                     case 3:
-                        std::cerr << "Model 3 is currently unimplemented, please specify a different model\n";
-                        return 1;
+                        model = SampleAllelicExpression::MODEL_3;
+                        break;
                     case 4:
                         model = SampleAllelicExpression::MODEL_4;
                         break;
