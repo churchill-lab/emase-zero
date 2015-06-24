@@ -30,6 +30,7 @@
 #include <algorithm>
 #include <cmath>
 #include <iostream>
+#include <iomanip>
 #include <fstream>
 #include "sample_allelic_expression.h"
 
@@ -43,17 +44,16 @@ SampleAllelicExpression::SampleAllelicExpression(AlignmentIncidenceMatrix *align
     current_ = new double[size()];
     previous_ = new double[size()];
 
-    gene_sum_hits_only_ = new double[alignment_incidence->num_genes()];
-    transcript_sums_ = new double[num_transcripts];
-
     // This is allocated during init(), since it's size depends on the
     // maximum number of transcripts with hits in a single read
     working_ = NULL;
 
     // only used by some normalization modes, will allocate if required.
+    transcript_sums_ = NULL;
     gene_sums_ = NULL;
     gene_sum_by_strain_ = NULL;
     gene_sum_by_strain_hits_only_ = NULL;
+    gene_sum_hits_only_ = NULL;
     gene_masks_ = NULL;
     read_sum_by_gene_ = NULL;
 
@@ -64,8 +64,14 @@ SampleAllelicExpression::~SampleAllelicExpression()
 {
     delete [] current_;
     delete [] previous_;
-    delete [] gene_sum_hits_only_;
-    delete [] transcript_sums_;
+
+    if (transcript_sums_) {
+        delete [] transcript_sums_;
+    }
+
+    if (gene_sum_hits_only_) {
+        delete [] gene_sum_hits_only_;
+    }
 
     if (working_) {
         delete [] working_;
@@ -217,12 +223,20 @@ void SampleAllelicExpression::updateModel1()
         gene_sum_by_strain_ = new double[num_haplotypes * alignment_incidence_->num_genes()];
     }
 
+    if (!gene_sum_hits_only_) {
+        gene_sum_hits_only_ = new double[alignment_incidence_->num_genes()];
+    }
+
     if (!gene_sum_by_strain_hits_only_) {
         gene_sum_by_strain_hits_only_ = new double[num_haplotypes * alignment_incidence_->num_genes()];
     }
 
     if (!gene_masks_) {
         gene_masks_ = new int[alignment_incidence_->num_genes()];
+    }
+
+    if (!transcript_sums_) {
+        transcript_sums_ = new double[num_transcripts];
     }
 
     std::swap(current_, previous_);
@@ -321,6 +335,7 @@ void SampleAllelicExpression::updateModel1()
                     working_[work_index] = (previous_[start_index + k] / gene_sum_by_strain_hits_only_[alignment_incidence_->tx_to_gene[alignment_incidence_->col_ind[j]] * num_haplotypes + k]) *
                                            (gene_sum_by_strain_[alignment_incidence_->tx_to_gene[alignment_incidence_->col_ind[j]] * num_haplotypes + k] / gene_sum_hits_only_[alignment_incidence_->tx_to_gene[alignment_incidence_->col_ind[j]]]) *
                                            (gene_sums_[alignment_incidence_->tx_to_gene[alignment_incidence_->col_ind[j]]] / genes_total);
+
                     if (working_[work_index] != working_[work_index]) {
                         // nan! underflow!
 
@@ -376,6 +391,14 @@ void SampleAllelicExpression::updateModel2()
         gene_sums_ =  new double[alignment_incidence_->num_genes()];
     }
 
+    if (!gene_sum_hits_only_) {
+        gene_sum_hits_only_ = new double[alignment_incidence_->num_genes()];
+    }
+
+    if (!transcript_sums_) {
+        transcript_sums_ = new double[num_transcripts];
+    }
+
     // generate transcript sums from previous value
     for (int i = 0; i < num_transcripts; ++i) {
         transcript_sums_[i] = 0.0;
@@ -387,7 +410,7 @@ void SampleAllelicExpression::updateModel2()
     // generate gene sums from previous value
     std::fill(gene_sums_, gene_sums_ + alignment_incidence_->num_genes(), 0.0);
     double genes_total = 0.0;
-    for (int i = 0; i < num_transcripts; ++i) {
+    for (long i = 0; i < num_transcripts; ++i) {
         gene_sums_[alignment_incidence_->tx_to_gene[i]] += transcript_sums_[i];
         genes_total += transcript_sums_[i];
     }
@@ -425,7 +448,7 @@ void SampleAllelicExpression::updateModel2()
         transcript_hits = work_index / num_haplotypes;
 
         // normalize working_ by transcript
-        for (int j = 0; j < transcript_hits; j++) {
+        for (long j = 0; j < transcript_hits; j++) {
             transcript_sum = 0.0;
             for (int k = 0; k < num_haplotypes; ++k) {
                 transcript_sum += working_[j * num_haplotypes + k];
@@ -438,14 +461,16 @@ void SampleAllelicExpression::updateModel2()
 
         // isoform_specificity
         for (long j = alignment_incidence_->row_ptr[i]; j < alignment_incidence_->row_ptr[i+1]; ++j) {
-            gene_sum_hits_only_[alignment_incidence_->tx_to_gene[alignment_incidence_->col_ind[j]]] += transcript_sums_[alignment_incidence_->col_ind[j]];
+            long gene_index = alignment_incidence_->tx_to_gene[alignment_incidence_->col_ind[j]];
+            gene_sum_hits_only_[gene_index] += transcript_sums_[alignment_incidence_->col_ind[j]];
         }
 
         work_index = 0;
         for (long j = alignment_incidence_->row_ptr[i]; j < alignment_incidence_->row_ptr[i+1]; ++j) {
-            double isoform_specificity = transcript_sums_[alignment_incidence_->col_ind[j]] / gene_sum_hits_only_[alignment_incidence_->tx_to_gene[alignment_incidence_->col_ind[j]]];
+            long gene_index = alignment_incidence_->tx_to_gene[alignment_incidence_->col_ind[j]];
+            double isoform_specificity = transcript_sums_[alignment_incidence_->col_ind[j]] / gene_sum_hits_only_[gene_index];
             for (int k = 0; k < num_haplotypes; ++k) {
-                working_[work_index] *= isoform_specificity * gene_sums_[alignment_incidence_->tx_to_gene[alignment_incidence_->col_ind[j]]];
+                working_[work_index] *= isoform_specificity * gene_sums_[gene_index];
 
                 if (working_[work_index] != working_[work_index]) {
                     // nan! underflow!
@@ -465,7 +490,7 @@ void SampleAllelicExpression::updateModel2()
         for (long j = alignment_incidence_->row_ptr[i]; j < alignment_incidence_->row_ptr[i+1]; ++j) {
             start_index = alignment_incidence_->col_ind[j] * num_haplotypes;
             for (int k = 0; k < num_haplotypes; ++k) {
-                current_[start_index + k] += (working_[work_index++] / read_sum)  * (double)alignment_incidence_->counts[i];
+                current_[start_index + k] += (working_[work_index++] / read_sum) * (double)alignment_incidence_->counts[i];
             }
         }
     }
@@ -486,6 +511,14 @@ void SampleAllelicExpression::updateModel3()
 
     if (!gene_sums_) {
         gene_sums_ =  new double[alignment_incidence_->num_genes()];
+    }
+
+    if (!gene_sum_hits_only_) {
+        gene_sum_hits_only_ = new double[alignment_incidence_->num_genes()];
+    }
+
+    if (!transcript_sums_) {
+        transcript_sums_ = new double[num_transcripts];
     }
 
     std::swap(current_, previous_);
@@ -658,6 +691,10 @@ void SampleAllelicExpression::saveStackSums(std::string filename)
         outfile << '\t' << alignment_incidence_->haplotype_names[i];
     }
     outfile << '\t' << "sum" << std::endl;
+
+    // use 4 fixed decimal places for output
+    outfile << std::fixed;
+    outfile << std::setprecision(4);
 
     double sum;
     for (int i = 0; i < num_transcripts; i++) {
