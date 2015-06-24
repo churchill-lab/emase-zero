@@ -4,11 +4,11 @@ LDFLAGS=`python-config --ldflags`
 
 OBJ=alignment_incidence_matrix.o python_interface.o sample_allelic_expression.o emase.o kallisto_import.o
 
-default: emase2
+default: emase-zero
 
 
 emase-zero: $(OBJ)
-	$(CC) -o emase2 $(OBJ) $(LDFLAGS)
+	$(CC) -o emase-zero $(OBJ) $(LDFLAGS)
 
 # python-config --cflags may output -Wstrict-prototypes as a flag, which g++ may
 # warn about because it is not a valid flag for C++ but it is for C. We use sed
