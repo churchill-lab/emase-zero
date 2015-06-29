@@ -28,7 +28,8 @@
 //
 
 #include <iostream>
-
+#include <iomanip>
+#include <cmath>
 #include <getopt.h>
 
 #include "alignment_incidence_matrix.h"
@@ -36,7 +37,7 @@
 #include "python_interface.h"
 #include "kallisto_import.h"
 
-#define VERSION "0.1.0"
+#define VERSION "0.2.0"
 
 void print_help();
 
@@ -46,6 +47,7 @@ int main(int argc, char **argv)
     AlignmentIncidenceMatrix *aim;
 
     bool binary_input = false;
+    int verbose = 0;
 
     int num_iterations;
     int max_iterations = 999;
@@ -79,12 +81,13 @@ int main(int argc, char **argv)
         {"max-iterations", required_argument, 0, 'i'},
         {"bin", no_argument, 0, 'b'},
         {"gene-mappings", required_argument, 0, 'g'},
-        {"version", no_argument, 0, 'v'},
+        {"verbose", no_argument, &verbose, 1},
+        {"version", no_argument, 0, 'V'},
         {"tolerance", required_argument, 0, 't'},
         {0, 0, 0, 0}
     };
 
-    while ((c = getopt_long(argc, argv, "hm:o:k:l:i:bg:vc:", long_options, &option_index)) != -1) {
+    while ((c = getopt_long(argc, argv, "hm:o:k:l:i:bg:vVc:", long_options, &option_index)) != -1) {
         switch (c) {
             case 'h':
                 print_help();
@@ -138,6 +141,10 @@ int main(int argc, char **argv)
                 break;
 
             case 'v':
+                verbose = 1;
+                break;
+
+            case 'V':
                std::cout << VERSION << std::endl;
                return 0;
 
@@ -187,6 +194,28 @@ int main(int argc, char **argv)
 
     }
 
+    std::cout << "\nemase-zero Version " << VERSION << std::endl <<std::endl;
+
+    std::cout << "Alignment File: " << input_filename << std::endl;
+
+    if (!gene_file.empty()) {
+        std::cout << "Grouping File: " << gene_file << std::endl;
+    }
+    else {
+        std::cout << "Grouping File: None\n";
+    }
+
+    if (!transcript_length_file.empty()) {
+        std::cout << "Transcript Length File: " << transcript_length_file << std::endl;
+    }
+    else {
+        std::cout << "Transcript Length File: None\n";
+    }
+
+    std::cout << "EM Model: " << model << std::endl
+              << "Output File: " << output_filename << std::endl
+              << "----------------------------------------------------\n\n\n";
+
 
     if (binary_input) {
         std::cout << "Loading " << input_filename << "..." << std::endl;
@@ -215,32 +244,38 @@ int main(int argc, char **argv)
     }
 
 
-    std::cout << "Alignment Incidence file " << input_filename << std::endl;
+    //std::cout << "Alignment Incidence file " << input_filename << std::endl;
     std::vector<std::string> hap_names = aim->get_haplotype_names();
 
-    std::cout << "File had the following haplotype names:\n";
-    for (std::vector<std::string>::iterator it = hap_names.begin(); it != hap_names.end(); ++it) {
-        std::cout << *it << "\t";
-    }
-    std::cout << std::endl;
+    if (verbose) {
+        std::cout << "File had the following haplotype names:\n";
+        for (std::vector<std::string>::iterator it = hap_names.begin(); it != hap_names.end(); ++it) {
+            std::cout << *it << "\t";
+        }
+        std::cout << std::endl;
 
-    if (aim->has_equivalence_classes()) {
-        std::cout << aim->num_alignment_classes() << " alignment classes loaded (" << aim->total_reads() << " total reads)\n";
-    }
-    else {
-        std::cout << aim->total_reads() << " reads loaded\n";
-    }
-    std::cout << aim->num_transcripts() << " transcripts\n";
+        if (aim->has_equivalence_classes()) {
+            std::cout << aim->num_alignment_classes() << " alignment classes loaded (" << aim->total_reads() << " total reads)\n";
+        }
+        else {
+            std::cout << aim->total_reads() << " reads loaded\n";
+        }
+        std::cout << aim->num_transcripts() << " transcripts\n";
 
-    std::cout << std::endl;
+        std::cout << std::endl;
+    }
 
     if (!transcript_length_file.empty()) {
-        std::cout << "Loading Transcript Length File " << transcript_length_file << std::endl;
+        if (verbose) {
+            std::cout << "Loading Transcript Length File " << transcript_length_file << std::endl;
+        }
         aim->loadTranscriptLengths(transcript_length_file);
     }
 
     if (!gene_file.empty()) {
-        std::cout << "Loading Gene Mapping File " << gene_file << std::endl;
+        if (verbose) {
+            std::cout << "Loading Gene Mapping File " << gene_file << std::endl;
+        }
         aim->loadGeneMappings(gene_file);
     }
 
@@ -257,16 +292,41 @@ int main(int argc, char **argv)
     t1 = clock();
     SampleAllelicExpression sae(aim, read_length, tolerance);
     t2 = clock();
-    diff = ((float)t2-(float)t1)/CLOCKS_PER_SEC;
-    std::cout << "Time for initializing stack sum = " << diff << "s" << std::endl;
+
+    if (verbose) {
+        diff = ((float)t2-(float)t1)/CLOCKS_PER_SEC;
+        std::cout << "Time for initializing stack sum = " << diff << "s" << std::endl;
+    }
 
     if (max_iterations > 0) {
         num_iterations = 0;
-        std::cout << "Beginning EM Iterations" << std::endl;
+        std::cout << "Beginning EM Iterations..." << std::endl;
+        double change;
+        double iteration_time;
+        bool  converged;
+        clock_t t1_inner, t2_inner;
+
+        if (verbose) {
+            std::cout << std::setw(7) << "Iter No" << "    "
+                      << std::setw(8) << "Time(s)" << "    "
+                      << std::setw(16) << "Change" << std::endl
+                      << "-------    --------    ----------------\n";
+        }
+
         t1 = clock();
         do {
-            sae.update(model);
-        } while (++num_iterations < max_iterations && !sae.converged());
+
+            t1_inner = clock();
+            sae.update();
+            t2_inner = clock();
+            converged = sae.converged(change);
+
+            if (verbose) {
+                std::cout << std::setw(7) << num_iterations + 1 << "    "
+                          << std::setw(8) << std::setprecision(3) << ((float)t2_inner - (float)t1_inner)/CLOCKS_PER_SEC
+                          << "    " << std::setw(16) << std::setprecision(1) << std::fixed << change << std::endl;
+            }
+        } while (++num_iterations < max_iterations && !converged);
         t2 = clock();
 
         diff = ((float)t2-(float)t1)/CLOCKS_PER_SEC;
@@ -317,7 +377,9 @@ void print_help()
               << "      the sum of the aboslute value of differences in the stack sum from\n"
               << "      one iteration to the next is lower than this value. (Default = 100\n"
               << "      when adjusting for transcript lengths, 0.001 * num_reads otherwise)\n\n"
-              << "  --version (-v):\n"
+              << "  --verbose (-v):\n"
+              <<"       Run in verbose mode\n\n"
+              << "  --version:\n"
               << "      Print the version and exit\n\n"
               << "  --help (-h):\n"
               << "      Print this message and exit\n\n";

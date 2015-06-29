@@ -654,9 +654,9 @@ void SampleAllelicExpression::updateModel4()
 }
 
 
-bool SampleAllelicExpression::converged()
+bool SampleAllelicExpression::converged(double &change)
 {
-    double sum = 0.0;
+    change = 0.0;
     double threshold = 0.0;
 
     if (tolerance_ > 0.0) {
@@ -670,10 +670,10 @@ bool SampleAllelicExpression::converged()
     }
 
     for (int i = 0; i < size(); ++i) {
-        sum += std::abs(current_[i] - previous_[i]);
+        change += std::abs(current_[i] - previous_[i]);
     }
 
-    if (sum < threshold) {
+    if (change < threshold) {
         return true;
     }
 
