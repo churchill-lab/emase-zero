@@ -323,8 +323,10 @@ int main(int argc, char **argv)
 
             if (verbose) {
                 std::cout << std::setw(7) << num_iterations + 1 << "    "
-                          << std::setw(8) << std::setprecision(3) << ((float)t2_inner - (float)t1_inner)/CLOCKS_PER_SEC
-                          << "    " << std::setw(16) << std::setprecision(1) << std::fixed << change << std::endl;
+                          << std::setw(8) << std::setprecision(3)
+                          << ((float)t2_inner - (float)t1_inner)/CLOCKS_PER_SEC
+                          << "    " << std::setw(16) << std::setprecision(1)
+                          << std::fixed << change << std::endl;
             }
         } while (++num_iterations < max_iterations && !converged);
         t2 = clock();
