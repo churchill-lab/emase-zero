@@ -53,7 +53,7 @@ int main(int argc, char **argv)
     int max_iterations = 999;
     int read_length = 100;
 
-    SampleAllelicExpression::model model = SampleAllelicExpression::MODEL_2;
+    SampleAllelicExpression::model model = SampleAllelicExpression::MODEL_1;
     int m;
 
     clock_t t1, t2;
@@ -87,7 +87,8 @@ int main(int argc, char **argv)
         {0, 0, 0, 0}
     };
 
-    while ((c = getopt_long(argc, argv, "hm:o:k:l:i:bg:vVc:", long_options, &option_index)) != -1) {
+    while ((c = getopt_long(argc, argv, "hm:o:k:l:i:bg:vVc:", long_options,
+                            &option_index)) != -1) {
         switch (c) {
             case 'h':
                 print_help();
@@ -172,7 +173,10 @@ int main(int argc, char **argv)
         return 1;
     }
 
-    if (!binary_input && (extension.size() >= input_filename.size() || !std::equal(extension.rbegin(), extension.rend(), input_filename.rbegin()))) {
+    if (!binary_input && (extension.size() >= input_filename.size()
+                          || !std::equal(extension.rbegin(),
+                                         extension.rend(),
+                                         input_filename.rbegin()))) {
         std::cerr << "\n[ERROR] Expected file with .pcl.bz2 extension. Input file should be prepared with bam_to_pcl.py script.\n";
         return 1;
     }
@@ -206,7 +210,8 @@ int main(int argc, char **argv)
     }
 
     if (!transcript_length_file.empty()) {
-        std::cout << "Transcript Length File: " << transcript_length_file << std::endl;
+        std::cout << "Transcript Length File: " << transcript_length_file
+                  << std::endl;
     }
     else {
         std::cout << "Transcript Length File: None\n";
@@ -233,7 +238,8 @@ int main(int argc, char **argv)
             return 1;
         }
 
-        std::cout << "Loading " << input_filename << ". This may take a while..." << std::endl;
+        std::cout << "Loading " << input_filename
+                  << ". This may take a while..." << std::endl;
         aim = pi.load(input_filename);
 
         if (!aim) {
@@ -244,18 +250,19 @@ int main(int argc, char **argv)
     }
 
 
-    //std::cout << "Alignment Incidence file " << input_filename << std::endl;
     std::vector<std::string> hap_names = aim->get_haplotype_names();
 
     if (verbose) {
         std::cout << "File had the following haplotype names:\n";
-        for (std::vector<std::string>::iterator it = hap_names.begin(); it != hap_names.end(); ++it) {
+        for (auto it = hap_names.begin(); it != hap_names.end(); ++it) {
             std::cout << *it << "\t";
         }
         std::cout << std::endl;
 
         if (aim->has_equivalence_classes()) {
-            std::cout << aim->num_alignment_classes() << " alignment classes loaded (" << aim->total_reads() << " total reads)\n";
+            std::cout << aim->num_alignment_classes()
+                      << " alignment classes loaded ("
+                      << aim->total_reads() << " total reads)\n";
         }
         else {
             std::cout << aim->total_reads() << " reads loaded\n";
@@ -267,7 +274,8 @@ int main(int argc, char **argv)
 
     if (!transcript_length_file.empty()) {
         if (verbose) {
-            std::cout << "Loading Transcript Length File " << transcript_length_file << std::endl;
+            std::cout << "Loading Transcript Length File "
+                      << transcript_length_file << std::endl;
         }
         aim->loadTranscriptLengths(transcript_length_file);
     }
@@ -295,7 +303,8 @@ int main(int argc, char **argv)
 
     if (verbose) {
         diff = ((float)t2-(float)t1)/CLOCKS_PER_SEC;
-        std::cout << "Time for initializing stack sum = " << diff << "s" << std::endl;
+        std::cout << "Time for initializing stack sum = " << diff << "s"
+                  << std::endl;
     }
 
     if (max_iterations > 0) {
@@ -332,7 +341,8 @@ int main(int argc, char **argv)
         t2 = clock();
 
         diff = ((float)t2-(float)t1)/CLOCKS_PER_SEC;
-        std::cout << "Time for " << num_iterations << " iterations = " << diff << "s\n";
+        std::cout << "Time for " << num_iterations << " iterations = " << diff
+                  << "s\n";
         std::cout << "Time per iteration " << diff/num_iterations << "s\n";
     }
 
