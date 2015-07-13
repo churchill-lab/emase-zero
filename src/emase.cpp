@@ -326,7 +326,7 @@ int main(int argc, char **argv)
         do {
 
             t1_inner = clock();
-            sae.update();
+            sae.update(model);
             t2_inner = clock();
             converged = sae.converged(change);
 
