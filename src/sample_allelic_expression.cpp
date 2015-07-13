@@ -694,7 +694,7 @@ void SampleAllelicExpression::saveStackSums(std::string filename)
 
     // use 4 fixed decimal places for output
     outfile << std::fixed;
-    outfile << std::setprecision(4);
+    outfile << std::setprecision(6);
 
     double sum;
     for (int i = 0; i < num_transcripts; i++) {
