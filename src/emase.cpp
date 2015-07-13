@@ -37,7 +37,7 @@
 #include "python_interface.h"
 #include "kallisto_import.h"
 
-#define VERSION "0.2.0"
+#define VERSION "0.2.1"
 
 void print_help();
 
