@@ -343,7 +343,7 @@ int main(int argc, char **argv)
         diff = ((float)t2-(float)t1)/CLOCKS_PER_SEC;
         std::cout << "Time for " << num_iterations << " iterations = " << diff
                   << "s\n";
-        std::cout << "Time per iteration " << diff/num_iterations << "s\n";
+        std::cout << "Time per iteration " << std::setprecision(2) << diff/num_iterations << "s\n";
     }
 
     std::cout << "Saving results to " << output_filename << std::endl;
