@@ -42,7 +42,7 @@ transcript that is present in the input file.
 
 EMASE-Zero can also adjust for transcript length. To use this feature, you would
 pass a file containing the length of each transcript for each haplotype. The 
-format of each line is 'TranscriptName_HaplotypeName\tlenght'
+format of each line is 'TranscriptName_HaplotypeName\tlength'
 
 EMASE-Zero, a C++ version of EMASE, is still under development and is based on
 the Python prototype of EMASE which is available here:
