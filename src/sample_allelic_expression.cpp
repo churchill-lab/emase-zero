@@ -686,7 +686,7 @@ void SampleAllelicExpression::saveStackSums(std::string filename)
     std::ofstream outfile;
     outfile.open(filename);
 
-    outfile << "Transcript";
+    outfile << "#Transcript";
     for (int i = 0; i < num_haplotypes; i++) {
         outfile << '\t' << alignment_incidence_->haplotype_names[i];
     }
