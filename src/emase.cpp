@@ -37,7 +37,7 @@
 #include "python_interface.h"
 #include "kallisto_import.h"
 
-#define VERSION "0.2.1"
+#define VERSION "0.2.2"
 
 void print_help();
 
@@ -87,7 +87,7 @@ int main(int argc, char **argv)
         {0, 0, 0, 0}
     };
 
-    while ((c = getopt_long(argc, argv, "hm:o:k:l:i:bg:vVc:", long_options,
+    while ((c = getopt_long(argc, argv, "hm:o:k:l:i:bg:vVc:t:", long_options,
                             &option_index)) != -1) {
         switch (c) {
             case 'h':
@@ -340,7 +340,7 @@ int main(int argc, char **argv)
         } while (++num_iterations < max_iterations && !converged);
         t2 = clock();
 
-        diff = ((float)t2-(float)t1)/CLOCKS_PER_SEC;
+        diff = ((float)t2 - (float)t1) / CLOCKS_PER_SEC;
         std::cout << "Time for " << num_iterations << " iterations = " << diff
                   << "s\n";
         std::cout << "Time per iteration " << std::setprecision(2) << diff/num_iterations << "s\n";
