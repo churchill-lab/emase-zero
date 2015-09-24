@@ -662,7 +662,7 @@ bool SampleAllelicExpression::converged(double &change)
     if (tolerance_ > 0.0) {
         threshold = tolerance_;
     }
-    else if  (alignment_incidence_->transcript_lengths_.size() == alignment_incidence_->num_transcripts()) {
+    else if  (alignment_incidence_->transcript_lengths_.size() / num_haplotypes == alignment_incidence_->num_transcripts()) {
         threshold = 100.0;
     }
     else {
