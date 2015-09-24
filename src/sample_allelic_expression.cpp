@@ -36,7 +36,7 @@
 
 
 SampleAllelicExpression::SampleAllelicExpression(AlignmentIncidenceMatrix *alignment_incidence, int read_length, double tolerance) :
-    alignment_incidence_(alignment_incidence), read_length_(read_length), tolerance_(tolerance)
+    alignment_incidence_(alignment_incidence), read_length_(read_length)
 {
     num_haplotypes = (int)alignment_incidence->num_haplotypes();
     num_transcripts = (int)alignment_incidence->num_transcripts();
@@ -56,6 +56,16 @@ SampleAllelicExpression::SampleAllelicExpression(AlignmentIncidenceMatrix *align
     gene_sum_hits_only_ = NULL;
     gene_masks_ = NULL;
     read_sum_by_gene_ = NULL;
+
+
+    if (alignment_incidence->transcript_lengths_.size() / num_haplotypes == alignment_incidence->num_transcripts()) {
+        // we are doing lenght adjustment, mutltiply threshold by 1M
+        threshold_ = tolerance * 1000000;
+    }
+    else {
+        // no lenght adjustment, multiply threshold by number of reads
+        threshold_ = tolerance * alignment_incidence->total_reads();
+    }
 
     init();
 }
@@ -657,23 +667,12 @@ void SampleAllelicExpression::updateModel4()
 bool SampleAllelicExpression::converged(double &change)
 {
     change = 0.0;
-    double threshold = 0.0;
-
-    if (tolerance_ > 0.0) {
-        threshold = tolerance_;
-    }
-    else if  (alignment_incidence_->transcript_lengths_.size() / num_haplotypes == alignment_incidence_->num_transcripts()) {
-        threshold = 100.0;
-    }
-    else {
-        threshold = 0.001 * alignment_incidence_->total_reads();
-    }
 
     for (int i = 0; i < size(); ++i) {
         change += std::abs(current_[i] - previous_[i]);
     }
 
-    if (change < threshold) {
+    if (change < threshold_) {
         return true;
     }
 

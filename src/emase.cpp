@@ -70,7 +70,7 @@ int main(int argc, char **argv)
     int option_index = 0;
     bool bad_args = false;
 
-    double tolerance = 0.0;
+    double tolerance = 0.0001;
 
     static struct option long_options[] = {
         {"help", no_argument, 0, 'h'},
@@ -385,10 +385,11 @@ void print_help()
               << "  --max-iterations (-i) <int>:\n"
               << "      Specify the maximum number of EM iterations. (Default 999)\n\n"
               << "  --tolerance (-t) <double>:\n"
-              << "      Specify the convergence threshold. emase2 will terminate when\n"
-              << "      the sum of the aboslute value of differences in the stack sum from\n"
-              << "      one iteration to the next is lower than this value. (Default = 100\n"
-              << "      when adjusting for transcript lengths, 0.001 * num_reads otherwise)\n\n"
+              << "      Specify the convergence threshold. emase will terminate when the\n"
+              << "      sum of the aboslute value of differences in the stack sum from one\n"
+              << "      iteration to the next is lower than this value multiplied by\n"
+              << "      1,000,000 if performing length adjustment and multipled by #reads if\n"
+              << "      not (Default = 0.0001)\n\n"
               << "  --verbose (-v):\n"
               <<"       Run in verbose mode\n\n"
               << "  --version:\n"

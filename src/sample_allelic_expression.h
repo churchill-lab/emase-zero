@@ -38,7 +38,7 @@ public:
 
     enum model {MODEL_1 = 1, MODEL_2 = 2, MODEL_3 = 3, MODEL_4 = 4};
 
-    SampleAllelicExpression(AlignmentIncidenceMatrix *alignment_incidence, int read_length=100, double tolerance=0.0);
+    SampleAllelicExpression(AlignmentIncidenceMatrix *alignment_incidence, int read_length, double tolerance);
     ~SampleAllelicExpression();
     void update(model m = MODEL_1);
     bool converged(double &change);
@@ -68,7 +68,7 @@ private:
     int num_transcripts;
     int read_length_;
 
-    double tolerance_;
+    double threshold_;
 
     void init();
     void init_normalize_read();
