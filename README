@@ -22,11 +22,11 @@ and two text files containing transcript names and transcript to gene mapping
 information using the provided bam_to_pcl.py script. See bam_to_pcl.py --help
 for more information.  The second file format is a binary file generated from
 a modified version of Kallisto (a program for quantifying abundances of
-transcripts from RNA-Seq data) called kallisto-export.  Input files produced by
-kallisto-export are now the preferred format.
+transcripts from RNA-Seq data) called kallisto-align.  Input files produced by
+kallisto-align are now the preferred format.
 
-kallisto-export is available here:
-    https://github.com/churchill-lab/kallisto-export
+kallisto-align is available here:
+    https://github.com/churchill-lab/kallisto-align
 Kallisto is here:
     https://github.com/pachterlab/kallisto
 
