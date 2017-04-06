@@ -38,9 +38,10 @@ public:
 
     enum model {MODEL_1 = 1, MODEL_2 = 2, MODEL_3 = 3, MODEL_4 = 4};
 
-    SampleAllelicExpression(AlignmentIncidenceMatrix *alignment_incidence, int read_length, double tolerance);
+    SampleAllelicExpression(AlignmentIncidenceMatrix *alignment_incidence, double tolerance);
     ~SampleAllelicExpression();
     void update(model m = MODEL_1);
+    void updateNoApplyTL(model m = MODEL_1);
     bool converged(double &change);
     inline int size() {return num_haplotypes * num_transcripts;}
     void saveStackSums(std::string filename);
@@ -66,7 +67,6 @@ private:
 
     int num_haplotypes;
     int num_transcripts;
-    int read_length_;
 
     double threshold_;
 

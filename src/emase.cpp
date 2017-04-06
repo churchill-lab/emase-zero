@@ -51,7 +51,6 @@ int main(int argc, char **argv)
 
     int num_iterations;
     int max_iterations = 999;
-    int read_length = 100;
 
     SampleAllelicExpression::model model = SampleAllelicExpression::MODEL_1;
     int m;
@@ -61,6 +60,7 @@ int main(int argc, char **argv)
 
     std::string input_filename;
     std::string output_filename;
+    std::string output_filename_counts;
     std::string transcript_length_file;
     std::string extension = ".pcl.bz2";
     std::string gene_file;
@@ -75,11 +75,9 @@ int main(int argc, char **argv)
     static struct option long_options[] = {
         {"help", no_argument, 0, 'h'},
         {"model", required_argument, 0, 'm'},
-        {"output", required_argument, 0, 'o'},
-        {"read-length", required_argument, 0, 'k'},
+        {"outbase", required_argument, 0, 'o'},
         {"transcript-lengths", required_argument, 0, 'l'},
         {"max-iterations", required_argument, 0, 'i'},
-        {"bin", no_argument, 0, 'b'},
         {"gene-mappings", required_argument, 0, 'g'},
         {"verbose", no_argument, &verbose, 1},
         {"version", no_argument, 0, 'V'},
@@ -87,7 +85,7 @@ int main(int argc, char **argv)
         {0, 0, 0, 0}
     };
 
-    while ((c = getopt_long(argc, argv, "hm:o:k:l:i:bg:vVc:t:", long_options,
+    while ((c = getopt_long(argc, argv, "hm:o:l:i:bg:vVc:t:", long_options,
                             &option_index)) != -1) {
         switch (c) {
             case 'h':
@@ -119,10 +117,8 @@ int main(int argc, char **argv)
 
             case 'o':
                 output_filename = std::string(optarg);
-                break;
-
-            case 'k':
-                read_length = std::stoi(optarg);
+                output_filename.append(".tpm");
+                output_filename_counts.append(".counts");
                 break;
 
             case 'l':
@@ -131,10 +127,6 @@ int main(int argc, char **argv)
 
             case 'i':
                 max_iterations = std::stoi(optarg);
-                break;
-
-            case 'b':
-                binary_input = true;
                 break;
 
             case 'g':
@@ -173,29 +165,11 @@ int main(int argc, char **argv)
         return 1;
     }
 
-    if (!binary_input && (extension.size() >= input_filename.size()
-                          || !std::equal(extension.rbegin(),
-                                         extension.rend(),
-                                         input_filename.rbegin()))) {
-        std::cerr << "\n[ERROR] Expected file with .pcl.bz2 extension. Input file should be prepared with bam_to_pcl.py script.\n";
-        return 1;
-    }
 
     if (output_filename.empty()) {
         //use default, based on the input file name but placed in current working directdory
-
-        if (!binary_input) {
-            output_filename = input_filename.substr(0, input_filename.size() - extension.size()).append(".stacksum.tsv");
-        } else {
-           output_filename = input_filename;
-           output_filename.append(".stacksum.tsv");
-        }
-        //check to see if there was a path in the input file name.  If so, trim it off
-        std::size_t found = output_filename.rfind('/');
-        if (found != std::string::npos) {
-            output_filename = output_filename.substr(found+1);
-        }
-
+        output_filename = "emase-zero.quantified.tpm";
+        output_filename_counts = "emase-zero.quantified.counts";
     }
 
     std::cout << "\nemase-zero Version " << VERSION << std::endl <<std::endl;
@@ -218,36 +192,9 @@ int main(int argc, char **argv)
     }
 
     std::cout << "EM Model: " << model << std::endl
-              << "Output File: " << output_filename << std::endl
+              << "Output File (TPM): " << output_filename << std::endl
+              << "Output File (Counts): " << output_filename_counts << std::endl
               << "----------------------------------------------------\n\n\n";
-
-
-    if (binary_input) {
-        std::cout << "Loading " << input_filename << "..." << std::endl;
-        aim = loadFromBin(input_filename);
-
-        if (!aim) {
-            std::cerr << "Error loading binary input file\n";
-            return 1;
-        }
-    } else {
-        PythonInterface pi = PythonInterface();
-        if (pi.init()){
-            std::cerr << "Error importing TranscriptHits Python module.\n";
-            std::cerr << '\t' << pi.getErrorString() << std::endl;
-            return 1;
-        }
-
-        std::cout << "Loading " << input_filename
-                  << ". This may take a while..." << std::endl;
-        aim = pi.load(input_filename);
-
-        if (!aim) {
-            std::cerr << "Error loading pcl file\n";
-            std::cerr << '\t' << pi.getErrorString() << std::endl;
-            return 1;
-        }
-    }
 
 
     std::vector<std::string> hap_names = aim->get_haplotype_names();
@@ -298,7 +245,7 @@ int main(int argc, char **argv)
     }
 
     t1 = clock();
-    SampleAllelicExpression sae(aim, read_length, tolerance);
+    SampleAllelicExpression sae(aim, tolerance);
     t2 = clock();
 
     if (verbose) {
@@ -348,6 +295,8 @@ int main(int argc, char **argv)
 
     std::cout << "Saving results to " << output_filename << std::endl;
     sae.saveStackSums(output_filename);
+    sae.updateNoApplyTL(model);
+    sae.saveStackSums(output_filename_counts);
     std::cout << "Done.\n";
 
     return 0;
