@@ -32,3 +32,5 @@ src/emase-zero
 *.exe
 *.out
 *.app
+
+.idea/
