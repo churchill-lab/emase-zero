@@ -5,16 +5,8 @@ EMASE-Zero README File
 Overview
 --------
 
-EMASE: Expectation-Maximization algorithm for Allele Specific Expression
-
-Narayanan Raghupathy, Kwangbom Choi, Steve Munger, Glen Beane, Al Simons,
-and Gary Churchill
-
-
-What is EMASE-Zero?
-
-EMASE-Zero is a software program written in C++ to quantify allele-specific
-expression and gene expression simultaneously from RNA-seq data.
+EMASE-Zero is C++ implementation of EMASE, Expectation-Maximization algorithm 
+for Allele Specific Expression, developed based on 
 
 EMASE-Zero takes in one of two file formats as input.  One is a custom file
 format, which is constructed from the diploid transcriptome alignment BAM file
