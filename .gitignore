@@ -34,3 +34,5 @@ src/emase-zero
 *.app
 
 .idea/
+.project
+.vscode
