@@ -1,13 +1,13 @@
 # Setup
-title:        "EMASE-Zero"
-tagline:      "Expectation-Maximization algorithm for Allele-Specific Expression"
+title:        EMASE-Zero
+tagline:      Expectation-Maximization algorithm for Allele-Specific Expression
 baseurl:      ""
 paginate:     1
 
 # About/contact
-author:       "Kwangbom Choi, Ph.D."
-  name:       "Kwangbom Choi, Ph.D."
-  url:        "https://www.jax.org/research-and-faculty/faculty/research-scientists/kb-choi"
+author:
+  name:       Kwangbom "KB" Choi
+  url:        https://www.jax.org/research-and-faculty/faculty/research-scientists/kb-choi
 
 # Gems
 gems:
