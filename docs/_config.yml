@@ -1,6 +1,6 @@
 # Setup
-title:        EMASE-Zero
-tagline:      Expectation-Maximization algorithm for Allele-Specific Expression
+title:        "EMASE-Zero"
+tagline:      "Expectation-Maximization algorithm for Allele-Specific Expression"
 baseurl:      ""
 paginate:     1
 
