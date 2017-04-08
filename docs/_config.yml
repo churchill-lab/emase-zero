@@ -5,8 +5,8 @@ baseurl:      ""
 paginate:     1
 
 # About/contact
-author:       Kwangbom "KB" Choi, Ph.D.
-  name:       Kwangbom "KB" Choi, Ph.D.
+author:       "Kwangbom Choi, Ph.D."
+  name:       "Kwangbom Choi, Ph.D."
   url:        "https://www.jax.org/research-and-faculty/faculty/research-scientists/kb-choi"
 
 # Gems
