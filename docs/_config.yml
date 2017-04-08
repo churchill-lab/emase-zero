@@ -1,13 +1,13 @@
 # Setup
-title:        Project or Site name
-tagline:      A responsive theme for your project on GitHub Pages
+title:        EMASE-Zero
+tagline:      Expectation-Maximization algorithm for Allele-Specific Expression
 baseurl:      ""
 paginate:     1
 
 # About/contact
-author:
-  name:       Author name
-  url:        http://yourhomepage.com 
+author:       Kwangbom "KB" Choi, Ph.D.
+  name:       Kwangbom "KB" Choi, Ph.D.
+  url:        https://www.jax.org/research-and-faculty/faculty/research-scientists/kb-choi
 
 # Gems
 gems:
