@@ -3,8 +3,11 @@ layout: default
 title: {{ site.name }}
 ---
 
+<p>EMASE-Zero is C++ implementation of EMASE, Expectation-Maximization (EM) algorithm 
+for Allele Specific Expression available at <a href="https://github.com/churchill-lab/emase">https://github.com/churchill-lab/emase</a>. EMASE is unique because it models the hierarchy -Zero generalizes fast EM to run on any alignment strategies</p>
+
 <div id="home">
-  <h1>Blog Posts</h1>
+  <h1>History</h1>
   <ul class="posts">
     {% for post in site.posts %}
       <li><span>{{ post.date | date_to_string }}</span> &raquo; <a href="{{ site.baseurl }}{{ post.url }}">{{ post.title }}</a></li>

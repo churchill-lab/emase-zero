@@ -3,6 +3,7 @@ title:        EMASE-Zero
 tagline:      Expectation-Maximization algorithm for Allele-Specific Expression
 baseurl:      ""
 paginate:     1
+show_downloads: "true"
 
 # About/contact
 author:
