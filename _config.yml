@@ -1,0 +1,18 @@
+# Setup
+title:        EMASE-Zero
+tagline:      Expectation-Maximization algorithm for Allele-Specific Expression
+baseurl:      ""
+paginate:     1
+show_downloads: "true"
+
+# About/contact
+author:
+  name:       Kwangbom "KB" Choi
+  url:        https://www.jax.org/research-and-faculty/faculty/research-scientists/kb-choi
+
+# Gems
+gems:
+  - jekyll-paginate
+
+#Others
+markdown: kramdown
