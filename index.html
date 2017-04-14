@@ -69,7 +69,7 @@ title: {{ site.name }}
         Print this message and exit</code>
 </pre>
 
-<p>&#8226;<code><strong>-b</strong></code> or <code><strong>--bin</strong></code> It is assumed that we have our read alignment in a bam file. EMASE-Zero does not require any specific aligner, but we recommend <a href="http://bowtie-bio.sourceforge.net/index.shtml">bowtie</a> (See example below). Then we need to build an alignment incidence matrix using <a href="churchill-lab.github.io/alntools">alntools</a>.</p>
+<p>&#8226;<code><strong>-b</strong></code> or <code><strong>--bin</strong></code> It is assumed that we have our read alignment in a bam file. EMASE-Zero does not require any specific aligner, but we recommend <a href="http://bowtie-bio.sourceforge.net/index.shtml">bowtie</a> (See example below for parameters we use). We need to first build an alignment incidence matrix using <a href="churchill-lab.github.io/alntools">alntools</a> and store it in its binary format. </p>
 
 <p>For example,</p>
 <pre><code>$ bowtie -q -a --best --strata --sam -v 3 bowtie.transcriptome my_sample.fastq | samtools view -bS - > my_sample.bam
