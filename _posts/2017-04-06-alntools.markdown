@@ -1,3 +1,5 @@
+---
+layout: default
 title:  "Use alntools to make binary EC file"
 date:   2017-04-06 14:50:00
 categories: main
