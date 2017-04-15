@@ -1,0 +1,8 @@
+title:  "Use alntools to make binary EC file"
+date:   2017-04-06 14:50:00
+categories: main
+---
+
+We removed the python alignment processor from EMASE-Zero. We made an independent, more elegant project, [alntools][alntools], for preprocessing bam files. We will cover other types of read alignments in its future version.
+
+[alntools]: https://churchill-lab.github.io/alntools

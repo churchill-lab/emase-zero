@@ -1,0 +1,10 @@
+---
+layout: default
+title:  "Welcome to EMASE-Zero!"
+date:   2015-06-26 13:50:00
+categories: main
+---
+
+EMASE-Zero is now available on github. It assumes you installed [python prototype][py_emase] of EMASE algorithm.
+
+[py_emase]: https://emase.readthedocs.io
