@@ -69,12 +69,19 @@ title: {{ site.name }}
         Print this message and exit</code>
 </pre>
 
-<p>&#8226;<code><strong>-b</strong></code> or <code><strong>--bin</strong></code>: Specify the equivalence class (EC) file name (<a href="churchill-lab.github.io/alntools/#output">alntools</a> binary format). An EC binary file is generated from a bam file. EMASE-Zero does not require any specific aligner, but we recommend <a href="http://bowtie-bio.sourceforge.net/index.shtml">bowtie</a> (See example below for the bowtie options we use for RNA-Seq analyses).</p>
+<p>&#8226;<code><strong>-b</strong></code> or <code><strong>--bin</strong></code>: Specify equivalence class (EC) file name (<a href="churchill-lab.github.io/alntools/#output">alntools</a> binary format). An EC binary file is generated from a bam file. EMASE-Zero does not require any specific aligner, but we recommend <a href="http://bowtie-bio.sourceforge.net/index.shtml">bowtie</a> (See example below for the bowtie options we use for RNA-Seq analyses).</p>
 
 <p>&#8226;<code><strong>-m</strong></code> or <code><strong>--model</strong></code>: Specify EMASE model for disambiguating multireads. According to our benchmarking, Model 2 worked best for ASE while Model 4 were the best for total gene exression.
 <p><a id="models" href="#models"></a><img src="EMASE_models.jpg" alt="" title="EMASE models"></p>
 
-<p>For example,</p>
+<p>&#8226;<code><strong>-t</strong></code> or <code><strong>--transcript-lengths</strong></code>: Specify transcript length file name. We assume the file has the format of "Transcript_ID[tab]Length". For example, assuming 'M' and 'P' stand for maternal and paternal alleles respectively,</p>
+<pre><code>ENSMUST00000098609_M	2653
+ENSMUST00000098609_P	2659</code>
+</pre>
+
+<p>&#8226;<code><strong>-g</strong></code> or <code><strong>--gene-mappings</strong></code>: Specify gene-to-transcripts mapping file name.</p>
+
+<p>Here's an example pipeline of commands:</p>
 <pre><code>$ bowtie -q -a --best --strata --sam -v 3 bowtie.transcriptome my_sample.fastq | samtools view -bS - > my_sample.bam
 $ alntools bam2ec -t transcripts.lengths.tsv -c 8 my_sample.bam my_sample.bin
 $ emase-zero -m 2 -b my_sample.bin -o emase-zero.quantified -l transcript.lengths.tsv -g gene2transcripts.tsv</code>
