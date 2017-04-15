@@ -5,6 +5,6 @@ date:   2017-04-06 14:50:00
 categories: main
 ---
 
-We removed the python alignment processor from EMASE-Zero. We made an independent, more elegant project, [alntools][alntools], for preprocessing bam files. We will cover other types of read alignments in its future version.
+We removed the python alignment processor from EMASE-Zero. We made an independent, more elegant project, [alntools][alntools], for preprocessing bam files. We will cover other formats of read alignments, e.g., msf or pslx, in the future version of alntools.
 
 [alntools]: https://churchill-lab.github.io/alntools
