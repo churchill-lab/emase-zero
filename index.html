@@ -75,11 +75,22 @@ title: {{ site.name }}
 <p><a id="models" href="#models"></a><img src="EMASE_models.jpg" alt="" title="EMASE models"></p>
 
 <p>&#8226;<code><strong>-t</strong></code> or <code><strong>--transcript-lengths</strong></code>: Specify transcript length file name. We assume the file has the format of "Transcript_ID[tab]Length". For example, assuming 'M' and 'P' stand for maternal and paternal alleles respectively,</p>
-<pre><code>ENSMUST00000098609_M	2653
-ENSMUST00000098609_P	2659</code>
+<pre><code>ENSMUST00000000001_M	3262
+...
+ENSMUST00000098609_M	2653
+...
+ENSMUST00000000001_P	3264
+...
+ENSMUST00000098609_P	2659
+...</code>
 </pre>
 
-<p>&#8226;<code><strong>-g</strong></code> or <code><strong>--gene-mappings</strong></code>: Specify gene-to-transcripts mapping file name.</p>
+<p>&#8226;<code><strong>-g</strong></code> or <code><strong>--gene-mappings</strong></code>: Specify gene-to-transcripts mapping file name. The file should be formatted in Gene_ID[tab]Transcript_ID_1[tab]Transcript_ID_2[tab].... These mappings are among reference IDs, not among alleles (no haplotype code at the end like _M or _P). For example,</p>
+<pre><code>ENSMUSG00000000001	ENSMUST00000000001
+ENSMUSG00000000003	ENSMUST00000000003	ENSMUST00000114041
+ENSMUSG00000000028	ENSMUST00000000028	ENSMUST00000096990	ENSMUST00000115585
+...</code>
+</pre>
 
 <p>Here's an example pipeline of commands:</p>
 <pre><code>$ bowtie -q -a --best --strata --sam -v 3 bowtie.transcriptome my_sample.fastq | samtools view -bS - > my_sample.bam
