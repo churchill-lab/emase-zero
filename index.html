@@ -69,7 +69,7 @@ title: {{ site.name }}
         Print this message and exit</code>
 </pre>
 
-<p>&#8226;<code><strong>-b</strong></code> or <code><strong>--bin</strong></code>: Specify equivalence class (EC) file name (<a href="churchill-lab.github.io/alntools/#output">alntools</a> binary format). An EC binary file is generated from a bam file. EMASE-Zero does not require any specific aligner, but we recommend <a href="http://bowtie-bio.sourceforge.net/index.shtml">bowtie</a> (See example below for the bowtie options we use for RNA-Seq analyses).</p>
+<p>&#8226;<code><strong>-b</strong></code> or <code><strong>--bin</strong></code>: Specify the name of binary equivalence class (EC) file. A binary EC file is generated from a bam file using <a href="churchill-lab.github.io/alntools">alntools</a>. EMASE-Zero does not require any specific aligner to use, but we recommend <a href="http://bowtie-bio.sourceforge.net/index.shtml">bowtie</a> Please see example below for the bowtie options we use for RNA-Seq analyses.</p>
 
 <p>&#8226;<code><strong>-m</strong></code> or <code><strong>--model</strong></code>: Specify EMASE model for disambiguating multireads. According to our benchmarking, Model 2 worked best for ASE while Model 4 were the best for total gene exression.
 <p><a id="models" href="#models"></a><img src="EMASE_models.jpg" alt="" title="EMASE models"></p>
