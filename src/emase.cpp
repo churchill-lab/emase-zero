@@ -37,7 +37,7 @@
 #include "python_interface.h"
 #include "kallisto_import.h"
 
-#define VERSION "0.2.3"
+#define VERSION "0.2.4"
 
 void print_help();
 
@@ -117,6 +117,7 @@ int main(int argc, char **argv)
 
             case 'o':
                 output_filename = std::string(optarg);
+                output_filename_counts = output_filename.copy()
                 output_filename.append(".tpm");
                 output_filename_counts.append(".counts");
                 break;
@@ -196,7 +197,14 @@ int main(int argc, char **argv)
               << "Output File (Counts): " << output_filename_counts << std::endl
               << "----------------------------------------------------\n\n\n";
 
-
+    std::cout << "Loading " << input_filename << "..." << std::endl;		
+    aim = loadFromBin(input_filename);		
+    
+    if (!aim) {		
+        std::cerr << "Error loading binary input file\n";		
+        return 1;		
+    }		
+             
     std::vector<std::string> hap_names = aim->get_haplotype_names();
 
     if (verbose) {
@@ -311,8 +319,8 @@ void print_help()
               << title << std::endl
               << std::string(title.length(), '-') << std::endl << std::endl
               << "USAGE: emase-zero [options] <alignment_incidence_file>\n\n"
-              << "INPUT: Alignment Incidence file prepared with bam_to_pcl.py script or\n"
-              << "       with kallisto-export (https://github.com/churchill-lab/kallisto-export)\n\n"
+              << "INPUT: Binary Alignment Incidence file prepared with alntools\n"
+              << "       (https://churchill-lab.github.io/alntools/)\n\n"
               << "OPTIONS\n"
               << "  --model (-m) <int>:\n"
               << "      Specify normalization model (can be 1-4, default=1)\n\n"
@@ -328,9 +336,6 @@ void print_help()
               << "      Filename containing transcript to gene mapping. Tab delimited file where\n"
               << "      the first field is the gene ID, all other fields are the transcript IDs\n"
               << "      that belong to that gene\n\n"
-              << "  --read-length (-k) <int>:\n"
-              << "      Specify read length for use when applying transcript length adjustment.\n"
-              << "      Ignored unless combined with --transcript-lengths. (Default 100)\n\n"
               << "  --max-iterations (-i) <int>:\n"
               << "      Specify the maximum number of EM iterations. (Default 999)\n\n"
               << "  --tolerance (-t) <double>:\n"
