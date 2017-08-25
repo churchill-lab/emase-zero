@@ -117,7 +117,7 @@ int main(int argc, char **argv)
 
             case 'o':
                 output_filename = std::string(optarg);
-                output_filename_counts = output_filename.copy();
+                output_filename_counts = std::string(optarg);
                 output_filename.append(".tpm");
                 output_filename_counts.append(".counts");
                 break;
