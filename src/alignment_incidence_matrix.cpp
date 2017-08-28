@@ -220,7 +220,7 @@ void AlignmentIncidenceMatrix::loadTranscriptLengths(std::string filename) {
 
     int total_elements = num_transcripts() * num_haplotypes();
 
-    int length;
+    double length;
     std::string t_name;
     std::string hap_name;
     std::string id;
