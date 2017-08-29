@@ -263,7 +263,7 @@ int main(int argc, char **argv)
 
     if (max_iterations > 0) {
         num_iterations = 0;
-        std::cout << "Beginning EM Iterations..." << std::endl;
+        std::cout << "Running EM..." << std::endl;
         double change;
         double iteration_time;
         bool  converged;
@@ -300,7 +300,7 @@ int main(int argc, char **argv)
         std::cout << "Time per iteration " << std::setprecision(2) << diff/num_iterations << "s\n";
     }
 
-    std::cout << "Saving results to " << output_filename << std::endl;
+    std::cout << "Saving results..." << std::endl;
     sae.saveStackSums(output_filename);
     sae.updateNoApplyTL(model);
     sae.saveStackSums(output_filename_counts);
