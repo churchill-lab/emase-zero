@@ -740,7 +740,7 @@ void SampleAllelicExpression::applyTranscriptLength() {
 
     for (int i = 0; i < num_transcripts; i++) {
         for (int j = 0; j < num_haplotypes;  j++) {
-            current_[i * num_haplotypes + j] /= double(alignment_incidence_->transcript_lengths_[i * num_haplotypes + j]);
+            current_[i * num_haplotypes + j] /= alignment_incidence_->transcript_lengths_[i * num_haplotypes + j];
             sum += current_[i * num_haplotypes + j];
         }
     }

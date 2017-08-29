@@ -34,8 +34,7 @@
 
 #include "alignment_incidence_matrix.h"
 #include "sample_allelic_expression.h"
-#include "python_interface.h"
-#include "kallisto_import.h"
+#include "alignment_import.h"
 
 #define VERSION "0.2.4"
 

@@ -124,7 +124,7 @@ private:
 
     std::vector<int> counts;
 
-    std::vector<int> transcript_lengths_;
+    std::vector<double> transcript_lengths_;
 
     bool has_gene_mappings_;
 

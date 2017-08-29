@@ -18,39 +18,10 @@
  * along with this software. If not, see <http://www.gnu.org/licenses/>.
  */
 
-//
-//  python_interface.h
-//
-//  Created by Glen Beane on 10/21/14.
-//
-
-#ifndef PYTHON_INTERFACE
-#define PYTHON_INTERFACE
+#ifndef ALIGNMENT_IMPORT_H
+#define ALIGNMENT_IMPORT_H
 
 
-#include "alignment_incidence_matrix.h"
-
-class PythonInterface {
-
-public:
-    PythonInterface();
-    int init();
-    AlignmentIncidenceMatrix *load(std::string filename);
-    void setErrorStringFromPythonError();
-
-    inline std::string getErrorString() {
-        return err_string;
-    }
-
-private:
-
-    void *module_;
-    void *module_dict_;
-    void *transcript_hits_;
-
-    std::string err_string;
-
-};
-
+AlignmentIncidenceMatrix *loadFromBin(std::string filename);
 
 #endif
