@@ -263,7 +263,7 @@ void AlignmentIncidenceMatrix::loadTranscriptLengths(std::string filename) {
         }
 
         // it exists,  add its lenght to our list of transcript lengths
-        transcript_lengths_[transcript_search->second * num_haplotypes() + hap_search->second] = length;
+        transcript_lengths_[transcript_search->second * num_haplotypes() + hap_search->second] = std::max(length, 1.0);
 
     }
 
