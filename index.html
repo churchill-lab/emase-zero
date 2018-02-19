@@ -95,10 +95,12 @@ ENSMUSG00000000028	ENSMUST00000000028	ENSMUST00000096990	ENSMUST00000115585
 </pre>
 
 <p>Here's an example pipeline of commands:</p>
-<pre><code>$ bowtie -q -a --best --strata --sam -v 3 bowtie.transcriptome my_sample.fastq | samtools view -bS - > my_sample.bam
+<pre><code>$ bowtie -q -a --best --strata --sam -v 3 -m 100 bowtie.transcriptome my_sample.fastq | samtools view -bS - > my_sample.bam
 $ alntools bam2ec -t transcripts.lengths.tsv -c 8 my_sample.bam my_sample.bin
 $ emase-zero -m 2 -b my_sample.bin -o emase-zero.quantified -l transcript.lengths.tsv -g gene2transcripts.tsv</code>
 </pre>
+
+<p> Note: We highly recommend adding poly-A tail to the alignment target sequences (transcripts) when you build bowtie index. We usually add (R-1)-long poly-A tails where R is the read length.</p>
 
 <br>
 <div id="home">
