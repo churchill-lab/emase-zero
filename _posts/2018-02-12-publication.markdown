@@ -1,6 +1,6 @@
 ---
 layout: default
-title:  "How to cite"
+title:  "How to cite this work"
 date:   2018-02-12 14:50:00
 categories: main
 ---
