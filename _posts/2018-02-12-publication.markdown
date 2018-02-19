@@ -7,6 +7,6 @@ categories: main
 
 EMASE paper is finally published in Oxford Bioinformatics Journal.
 
-Narayanan Raghupathy, Kwangbom Choi, Matthew J. Vincent, Glen L. Beane, Keith Sheppard, Steven C. Munger, Ron Korstanje, Fernando Pardo-Manual de Villena, and Gary A Churchill. Hierarchical Analysis of RNA-Seq Reads Improves the Accuracy of Allele-specific Expression. Bioinformatics, bty078, 2018. [https://doi.org/10.1093/bioinformatics/bty078].
+Narayanan Raghupathy, Kwangbom Choi, Matthew J. Vincent, Glen L. Beane, Keith Sheppard, Steven C. Munger, Ron Korstanje, Fernando Pardo-Manual de Villena, and Gary A Churchill. **Hierarchical Analysis of RNA-Seq Reads Improves the Accuracy of Allele-specific Expression**. Bioinformatics, bty078, 2018. [https://doi.org/10.1093/bioinformatics/bty078].
 
 [https://doi.org/10.1093/bioinformatics/bty078]:https://doi.org/10.1093/bioinformatics/bty078
