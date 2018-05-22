@@ -18,21 +18,10 @@
  * along with this software. If not, see <http://www.gnu.org/licenses/>.
  */
 
-
-//
-//  emase.cpp
-//
-//
-//  Created by Glen Beane on 8/20/14.
-//
-//  Augmented by Matt Vincent on 5/16/2018.
-//
-//
-
-#include <iostream>
-#include <iomanip>
 #include <cmath>
 #include <getopt.h>
+#include <iomanip>
+#include <iostream>
 #include <stdio.h>
 
 #include "alignment_incidence_matrix.h"
@@ -44,38 +33,31 @@
 void print_help();
 
 
-int main(int argc, char **argv)
-{
+int main(int argc, char **argv) {
     AlignmentIncidenceMatrix *aim;
-
-    bool binary_input = false;
-    int verbose = 0;
-
-    int num_iterations;
-    int max_iterations = 999;
-
     SampleAllelicExpression::model model = SampleAllelicExpression::MODEL_1;
-    int m;
 
     clock_t t1, t2;
     float diff;
 
+    int m;
+    int max_iterations = 999;
+    int num_iterations;
+    int sample_start = 0;
+    int sample_end = 1;
+    int verbose = 0;
+
+    double tolerance = 0.0001;
+
+    std::string extension = ".pcl.bz2";
+    std::string gene_file;
     std::string input_filename;
     std::string output_filename;
     std::string output_filename_counts;
-    std::string transcript_length_file;
-    std::string extension = ".pcl.bz2";
-    std::string gene_file;
     std::string samples_str;
-    int sample_start = 0;
-    int sample_end = 1;
+    std::string transcript_length_file;
 
-    //getopt related variables
-    int c;
-    int option_index = 0;
     bool bad_args = false;
-
-    double tolerance = 0.0001;
 
     static struct option long_options[] = {
         {"help", no_argument, 0, 'h'},
@@ -90,6 +72,9 @@ int main(int argc, char **argv)
         {"tolerance", required_argument, 0, 't'},
         {0, 0, 0, 0}
     };
+
+    int c;
+    int option_index = 0;
 
     while ((c = getopt_long(argc, argv, "hm:o:l:i:g:s:vVc:t:", long_options,
                             &option_index)) != -1) {
@@ -158,7 +143,6 @@ int main(int argc, char **argv)
 
             case '?':
                 bad_args = true;
-
         }
     }
 
@@ -166,7 +150,6 @@ int main(int argc, char **argv)
         print_help();
         return 1;
     }
-
 
     if (argc - optind == 1) {
         input_filename = argv[optind];
@@ -176,7 +159,6 @@ int main(int argc, char **argv)
         return 1;
     }
 
-
     if (output_filename.empty()) {
         //use default, based on the input file name but placed in current working directdory
         output_filename = "emase-zero.quantified.tpm";
@@ -184,21 +166,18 @@ int main(int argc, char **argv)
     }
 
     std::cout << "\nemase-zero Version " << VERSION << std::endl <<std::endl;
-
     std::cout << "Alignment File: " << input_filename << std::endl;
 
     if (!gene_file.empty()) {
         std::cout << "Grouping File: " << gene_file << std::endl;
-    }
-    else {
+    } else {
         std::cout << "Grouping File: None\n";
     }
 
     if (!transcript_length_file.empty()) {
         std::cout << "Transcript Length File: " << transcript_length_file
                   << std::endl;
-    }
-    else {
+    } else {
         std::cout << "Transcript Length File: None\n";
     }
 
@@ -232,8 +211,8 @@ int main(int argc, char **argv)
               << "Output File (Counts): " << output_filename_counts << std::endl
               << "----------------------------------------------------\n\n\n";
 
+    // Loop through all the samples specified
     for (int i = sample_start; i < sample_end + 1; ++i) {
-
         if (version == 2) {
             std::cout << "Loading " << input_filename << ", Sample " << i << std::endl;
             aim = loadFromBin(input_filename, i);
@@ -259,8 +238,8 @@ int main(int argc, char **argv)
 
             if (aim->has_equivalence_classes()) {
                 std::cout << aim->num_alignment_classes()
-                        << " alignment classes loaded ("
-                        << aim->total_reads() << " total reads)\n";
+                          << " alignment classes loaded ("
+                          << aim->total_reads() << " total reads)\n";
             }
             else {
                 std::cout << aim->total_reads() << " reads loaded\n";
@@ -273,7 +252,7 @@ int main(int argc, char **argv)
         if (!transcript_length_file.empty()) {
             if (verbose) {
                 std::cout << "Loading Transcript Length File "
-                        << transcript_length_file << std::endl;
+                          << transcript_length_file << std::endl;
             }
             aim->loadTranscriptLengths(transcript_length_file);
         }
@@ -286,12 +265,7 @@ int main(int argc, char **argv)
         }
 
         if (model != SampleAllelicExpression::MODEL_4 && !aim->has_gene_mappings()) {
-            if (!binary_input) {
-                std::cerr << "[ERROR] File does not contain transcript to gene mapping information.  Only normalization Model 4 can be used.\n";
-            }
-            else {
-                std::cerr << "[ERROR] Only model 4 is possible without gene to transcript information (--gene-mappings, -g). You specified another model.\n";
-            }
+            std::cerr << "[ERROR] File does not contain transcript to gene mapping information.  Only normalization Model 4 can be used.\n";
             return 1;
         }
 
@@ -302,7 +276,7 @@ int main(int argc, char **argv)
         if (verbose) {
             diff = ((float)t2-(float)t1)/CLOCKS_PER_SEC;
             std::cout << "Time for initializing stack sum = " << diff << "s"
-                    << std::endl;
+                      << std::endl;
         }
 
         if (max_iterations > 0) {
@@ -321,8 +295,8 @@ int main(int argc, char **argv)
             }
 
             t1 = clock();
-            do {
 
+            do {
                 t1_inner = clock();
                 sae.update(model);
                 t2_inner = clock();
@@ -336,11 +310,11 @@ int main(int argc, char **argv)
                             << std::fixed << change << std::endl;
                 }
             } while (++num_iterations < max_iterations && !converged);
+            
             t2 = clock();
 
             diff = ((float)t2 - (float)t1) / CLOCKS_PER_SEC;
-            std::cout << "Time for " << num_iterations << " iterations = " << diff
-                    << "s\n";
+            std::cout << "Time for " << num_iterations << " iterations = " << diff << "s\n";
             std::cout << "Time per iteration " << std::setprecision(2) << diff/num_iterations << "s\n";
         }
 
@@ -370,8 +344,7 @@ int main(int argc, char **argv)
 }
 
 
-void print_help()
-{
+void print_help() {
     std::string title = "EMASE-Zero Version " VERSION " Help";
 
     std::cout << std::endl << std::endl

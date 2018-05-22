@@ -18,18 +18,11 @@
  * along with this software. If not, see <http://www.gnu.org/licenses/>.
  */
 
-//
-//  alignment_incidence_matrix.h
-//
-//
-//  Created by Glen Beane on 8/20/14.
-//
-
 #ifndef ALIGNMENT_INCIDENCE_MATRIX_H
 #define ALIGNMENT_INCIDENCE_MATRIX_H
 
-#include <vector>
 #include <string>
+#include <vector>
 
 #include "utilities.h"
 
@@ -38,12 +31,9 @@
 // relationship
 class SampleAllelicExpression;
 
-
 class AlignmentIncidenceMatrix {
 
 public:
-
-
     AlignmentIncidenceMatrix(std::vector<std::string> haplotypes,
                              std::vector<std::string> reads,
                              std::vector<std::string> transcripts,
@@ -60,7 +50,6 @@ public:
                              std::vector<int> row_ptr,
                              std::vector<int> val,
                              std::vector<int> counts);
-
 
     inline std::vector<std::string>::size_type num_haplotypes() {
         return haplotype_names.size();

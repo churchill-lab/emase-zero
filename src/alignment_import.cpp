@@ -18,15 +18,13 @@
  * along with this software. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <string>
 #include <fstream>
 #include <iostream>
+#include <string>
 
 #include "alignment_incidence_matrix.h"
 
-
-int getBinVersion(std::string filename)
-{
+int getBinVersion(std::string filename) {
     std::ifstream infile(filename, std::ios::binary);
 
     int version;
@@ -51,8 +49,7 @@ int getBinVersion(std::string filename)
 
    This code assumes that the reads/equivalence classes are stored in order.
  */
-AlignmentIncidenceMatrix *loadFromBin(std::string filename, int sample_idx = -1)
-{
+AlignmentIncidenceMatrix *loadFromBin(std::string filename, int sample_idx = -1) {
     AlignmentIncidenceMatrix *aim = NULL;
 
     // the following vectors will hold the data we read in from the file,
@@ -75,7 +72,6 @@ AlignmentIncidenceMatrix *loadFromBin(std::string filename, int sample_idx = -1)
     int num_haplotypes;
     int num_reads;
     int num_alignments;
-
     int size;
 
     std::vector<char> buffer;
@@ -127,7 +123,6 @@ AlignmentIncidenceMatrix *loadFromBin(std::string filename, int sample_idx = -1)
         haplotypes.push_back(std::string(buffer.data()));
     }
 
-
     if (version == 0) {
         // load alignments, use default counts of 1 per alignment
         // format is "read_id transcript_id value"
@@ -135,7 +130,6 @@ AlignmentIncidenceMatrix *loadFromBin(std::string filename, int sample_idx = -1)
         int read_id;
         int transcript_id;
         int value;
-
 
         // load list of read names
         infile.read((char*)&num_reads, sizeof(int));
@@ -354,7 +348,6 @@ AlignmentIncidenceMatrix *loadFromBin(std::string filename, int sample_idx = -1)
 
         std::cout << "Creating AlignmentIncidenceMatrix" << std::endl;
         
-
         aim = new AlignmentIncidenceMatrix(haplotypes, reads, transcripts, samples,
                                             col_ind, row_ptr, values,
                                             column_data);

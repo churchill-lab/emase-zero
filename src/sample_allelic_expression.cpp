@@ -18,20 +18,11 @@
  * along with this software. If not, see <http://www.gnu.org/licenses/>.
  */
 
-
-//
-//  sample_allelic_expression.cpp
-//
-//
-//  Created by Glen Beane on 8/22/14.
-//
-//
-
 #include <algorithm>
 #include <cmath>
-#include <iostream>
-#include <iomanip>
 #include <fstream>
+#include <iomanip>
+#include <iostream>
 #include "sample_allelic_expression.h"
 
 
@@ -69,8 +60,8 @@ SampleAllelicExpression::SampleAllelicExpression(AlignmentIncidenceMatrix *align
     init();
 }
 
-SampleAllelicExpression::~SampleAllelicExpression()
-{
+
+SampleAllelicExpression::~SampleAllelicExpression() {
     delete [] current_;
     delete [] previous_;
 
@@ -107,55 +98,41 @@ SampleAllelicExpression::~SampleAllelicExpression()
     }
 }
 
-void SampleAllelicExpression::init()
-{
+
+void SampleAllelicExpression::init() {
     init_normalize_read();
     applyTranscriptLength();
 }
 
-void SampleAllelicExpression::init_normalize_read()
-{
+
+void SampleAllelicExpression::init_normalize_read() {
     std::fill(current_, current_ + size(), 0.0);
-    //std::cout << "current_ size=" << (sizeof(current_) / sizeof(current_[0])) << std::endl;
-    //std::cout << "size()=" << size() << std::endl;
 
     int working_size;
     int start_index;
     int free_slots;
     int work_index;
     double read_sum;
+    auto end = alignment_incidence_->row_ptr.size() - 1;
 
     working_size = num_haplotypes * 4;
     free_slots = working_size;
-
     working_ = new double[working_size];
 
-    //std::cout << "working size=" << (sizeof(working_) / sizeof(working_[0])) << std::endl;
-
-    auto end = alignment_incidence_->row_ptr.size() - 1;
-
     //iterate over each read
-    //std::cout << "end=" << end << std::endl;
     for (int i = 0; i != end; ++i) {
         work_index = 0;
         read_sum = 0.0;
         free_slots = working_size;
-        //std::cout << "free_slots=" << free_slots << std::endl;
 
         // alignment_incidence_->row_ptr[i] gives us the start index for the
         // nozero values that make up this row
         // and there will be alignment_incidence_->row_ptr[i+1] - alignment_incidence_->row_ptr[i] values
         for (long j = alignment_incidence_->row_ptr[i]; j < alignment_incidence_->row_ptr[i+1]; ++j) {
-            //std::cout << "j=" << j << std::endl;
-    
-
-
             // make sure we haven't run out of memory in our working_ buffer
             // if it is full, double the capacity.  The size will always be a
             // multiple of num_haplotypes.
             if (free_slots == 0) {
-                //std::cout << "free_slots=0" << std::endl;
-                
                 double *tmp = working_;
                 working_ = new double[working_size * 2];
                 std::copy(tmp, tmp + working_size, working_);
@@ -171,52 +148,32 @@ void SampleAllelicExpression::init_normalize_read()
             // decrement the amount of free space
             free_slots -= num_haplotypes;
 
-            //std::cout << "free_slots=" << free_slots << std::endl;
-            //std::cout << "num_haplotypes=" << num_haplotypes << std::endl;
-
-
             // okay, we can do the actual work for this read
             for (int k = 0; k < num_haplotypes; ++k) {
                 // initialize to 1.0 if they had a hit, 0 otherwise
                 // each haplotype is represented by a single bit in the value
-                //std::cout << "k=" << k << std::endl;
-                //std::cout << "alignment_incidence_->val[j]=" << alignment_incidence_->val[j] << std::endl;
-                //std::cout << (alignment_incidence_->val[j] & (1 << k))  << std::endl;
-                //std::cout << "work_index a=" << work_index << std::endl;
                 if (alignment_incidence_->val[j] & (1 << k)) {
-                    //std::cout << "working size=" << (sizeof(working_) / sizeof(working_[0])) << std::endl;
                     working_[work_index++] = 1.0;
-                    //std::cout << "work_index b=" << work_index << std::endl;
                     read_sum += 1.0;
                 }
                 else {
                     working_[work_index++] = 0.0;
-                    //std::cout << "work_index c=" << work_index << std::endl;
                 }
             }
-
         }
-
-        //std::cout << "here=" << std::endl;
-
 
         work_index = 0;
         for (long j = alignment_incidence_->row_ptr[i]; j < alignment_incidence_->row_ptr[i+1]; ++j) {
-            //std::cout << "here j=" << j << std::endl;
             start_index = alignment_incidence_->col_ind[j] * num_haplotypes;
             for (int k = 0; k < num_haplotypes; ++k) {
-                //std::cout << "here k=" << k << std::endl;
                 current_[start_index + k] += (working_[work_index++] / read_sum) * (double)alignment_incidence_->counts[i];
-                //std::cout << "finish" << std::endl;
-
             }
         }
     }
 }
 
 
-void SampleAllelicExpression::update(SampleAllelicExpression::model m)
-{
+void SampleAllelicExpression::update(SampleAllelicExpression::model m) {
     switch (m) {
 
         case MODEL_1:
@@ -241,8 +198,7 @@ void SampleAllelicExpression::update(SampleAllelicExpression::model m)
 }
 
 
-void SampleAllelicExpression::updateNoApplyTL(SampleAllelicExpression::model m)
-{
+void SampleAllelicExpression::updateNoApplyTL(SampleAllelicExpression::model m) {
     switch (m) {
 
         case MODEL_1:
@@ -263,14 +219,12 @@ void SampleAllelicExpression::updateNoApplyTL(SampleAllelicExpression::model m)
     }
 }
 
-void SampleAllelicExpression::updateModel1()
-{
+
+void SampleAllelicExpression::updateModel1() {
     int start_index;
     int work_index;
-
     double read_sum;
     auto end = alignment_incidence_->row_ptr.size() - 1;
-
 
     if (!gene_sums_) {
         gene_sums_ =  new double[alignment_incidence_->num_genes()];
@@ -326,11 +280,8 @@ void SampleAllelicExpression::updateModel1()
         genes_total += transcript_sums_[i];
     }
 
-
     //iterate over each read
     for (int i = 0; i != end; ++i) {
-
-
         read_sum = 0.0;
 
         /* unfortunately, given the information we have and the way it is stored in memory,  we need to make three passes over
@@ -381,7 +332,6 @@ void SampleAllelicExpression::updateModel1()
             }
         }
 
-
         // finally we can compute the actual values to add to current_
         work_index = 0;
         for (long j = alignment_incidence_->row_ptr[i]; j < alignment_incidence_->row_ptr[i+1]; ++j) {
@@ -404,7 +354,6 @@ void SampleAllelicExpression::updateModel1()
                         alignment_incidence_->val[j] &= ~(1 << k);
                     }
                     read_sum += working_[work_index++];
-
                 }
                 else {
                     working_[work_index++] = 0.0;
@@ -429,8 +378,7 @@ void SampleAllelicExpression::updateModel1()
 }
 
 
-void SampleAllelicExpression::updateModel2()
-{
+void SampleAllelicExpression::updateModel2() {
     std::swap(current_, previous_);
 
     // clear current_ so we can use it to accumulate sums
@@ -438,12 +386,10 @@ void SampleAllelicExpression::updateModel2()
 
     int start_index;
     int work_index;
-    double transcript_sum;
     int transcript_hits;
-
+    double transcript_sum;
     double read_sum;
     auto end = alignment_incidence_->row_ptr.size() - 1;
-
 
     if (!gene_sums_) {
         gene_sums_ =  new double[alignment_incidence_->num_genes()];
@@ -478,17 +424,12 @@ void SampleAllelicExpression::updateModel2()
         gene_sums_[i] /= genes_total;
     }
 
-
-
     //iterate over each read
     for (int i = 0; i != end; ++i) {
-
         work_index = 0;
         read_sum = 0.0;
 
-
         for (long j = alignment_incidence_->row_ptr[i]; j < alignment_incidence_->row_ptr[i+1]; ++j) {
-
             gene_sum_hits_only_[alignment_incidence_->tx_to_gene[alignment_incidence_->col_ind[j]]] = 0.0;
 
             start_index = alignment_incidence_->col_ind[j] * num_haplotypes;
@@ -515,7 +456,6 @@ void SampleAllelicExpression::updateModel2()
                  working_[j * num_haplotypes + k] /= transcript_sum;
             }
         }
-
 
         // isoform_specificity
         for (long j = alignment_incidence_->row_ptr[i]; j < alignment_incidence_->row_ptr[i+1]; ++j) {
@@ -555,9 +495,7 @@ void SampleAllelicExpression::updateModel2()
 }
 
 
-void SampleAllelicExpression::updateModel3()
-{
-
+void SampleAllelicExpression::updateModel3() {
     long start_index;
     int work_index;
     double read_sum;
@@ -603,11 +541,8 @@ void SampleAllelicExpression::updateModel3()
         gene_sums_[i] /= genes_total;
     }
 
-
     //iterate over each read
     for (int i = 0; i != end; ++i) {
-
-
         read_sum = 0.0;
 
         for (long j = alignment_incidence_->row_ptr[i]; j < alignment_incidence_->row_ptr[i+1]; ++j) {
@@ -616,8 +551,8 @@ void SampleAllelicExpression::updateModel3()
         }
 
         work_index = 0;
-        for (long j = alignment_incidence_->row_ptr[i]; j < alignment_incidence_->row_ptr[i+1]; ++j) {
 
+        for (long j = alignment_incidence_->row_ptr[i]; j < alignment_incidence_->row_ptr[i+1]; ++j) {
             gene_sum_hits_only_[alignment_incidence_->tx_to_gene[alignment_incidence_->col_ind[j]]] = 0.0;
 
             start_index = alignment_incidence_->col_ind[j] * num_haplotypes;
@@ -634,8 +569,8 @@ void SampleAllelicExpression::updateModel3()
         }
 
         work_index = 0;
-        for (long j = alignment_incidence_->row_ptr[i]; j < alignment_incidence_->row_ptr[i+1]; ++j) {
 
+        for (long j = alignment_incidence_->row_ptr[i]; j < alignment_incidence_->row_ptr[i+1]; ++j) {
             for (int k = 0; k < num_haplotypes; ++k) {
                 if (alignment_incidence_->val[j] & (1 << k)) {
                     working_[work_index] /= read_sum_by_gene_[alignment_incidence_->tx_to_gene[alignment_incidence_->col_ind[j]]];
@@ -652,11 +587,11 @@ void SampleAllelicExpression::updateModel3()
                     }
                 }
                 read_sum += working_[work_index++];
-
             }
         }
 
         work_index = 0;
+
         for (long j = alignment_incidence_->row_ptr[i]; j < alignment_incidence_->row_ptr[i+1]; ++j) {
             start_index = alignment_incidence_->col_ind[j] * num_haplotypes;
             for (int k = 0; k < num_haplotypes; ++k) {
@@ -667,8 +602,8 @@ void SampleAllelicExpression::updateModel3()
     }
 }
 
-void SampleAllelicExpression::updateModel4()
-{
+
+void SampleAllelicExpression::updateModel4() {
     std::swap(current_, previous_);
 
     // clear current_ so we can use it to accumulate sums
@@ -681,12 +616,12 @@ void SampleAllelicExpression::updateModel4()
 
     //iterate over each read
     for (int i = 0; i != end; ++i) {
-
         work_index = 0;
         read_sum = 0.0;
 
         for (long j = alignment_incidence_->row_ptr[i]; j < alignment_incidence_->row_ptr[i+1]; ++j) {
             start_index = alignment_incidence_->col_ind[j] * num_haplotypes;
+
             for (int k = 0; k < num_haplotypes; ++k) {
                 // initialize all strains at this locus
                 if (alignment_incidence_->val[j] & (1 << k)) {
@@ -699,8 +634,8 @@ void SampleAllelicExpression::updateModel4()
             }
         }
 
-
         work_index = 0;
+
         for (long j = alignment_incidence_->row_ptr[i]; j < alignment_incidence_->row_ptr[i+1]; ++j) {
             start_index = alignment_incidence_->col_ind[j] * num_haplotypes;
             for (int k = 0; k < num_haplotypes; ++k) {
@@ -711,8 +646,7 @@ void SampleAllelicExpression::updateModel4()
 }
 
 
-bool SampleAllelicExpression::converged(double &change)
-{
+bool SampleAllelicExpression::converged(double &change) {
     change = 0.0;
 
     for (int i = 0; i < size(); ++i) {
@@ -732,6 +666,7 @@ void SampleAllelicExpression::saveStackSums(std::string filename) {
     outfile.open(filename, std::fstream::app);
 
     outfile << "#Transcript";
+
     for (int i = 0; i < num_haplotypes; i++) {
         outfile << '\t' << alignment_incidence_->haplotype_names[i];
     }
@@ -742,9 +677,11 @@ void SampleAllelicExpression::saveStackSums(std::string filename) {
     outfile << std::setprecision(6);
 
     double sum;
+
     for (int i = 0; i < num_transcripts; i++) {
         sum = 0.0;
         outfile << alignment_incidence_->transcript_names[i] << "\t";
+
         for (int j = 0; j < num_haplotypes;  j++) {
             outfile << current_[i * num_haplotypes + j];
             sum += current_[i * num_haplotypes + j];
@@ -753,6 +690,7 @@ void SampleAllelicExpression::saveStackSums(std::string filename) {
         outfile << sum << std::endl;
     }
 }
+
 
 void SampleAllelicExpression::saveStackSums(std::string filename, std::string sample_name) {
     std::ofstream outfile;
@@ -760,6 +698,7 @@ void SampleAllelicExpression::saveStackSums(std::string filename, std::string sa
 
     outfile << "##Sample: " << sample_name << std::endl;
     outfile << "#Transcript";
+
     for (int i = 0; i < num_haplotypes; i++) {
         outfile << '\t' << alignment_incidence_->haplotype_names[i];
     }
@@ -770,9 +709,11 @@ void SampleAllelicExpression::saveStackSums(std::string filename, std::string sa
     outfile << std::setprecision(6);
 
     double sum;
+
     for (int i = 0; i < num_transcripts; i++) {
         sum = 0.0;
         outfile << alignment_incidence_->transcript_names[i] << "\t";
+        
         for (int j = 0; j < num_haplotypes;  j++) {
             outfile << current_[i * num_haplotypes + j];
             sum += current_[i * num_haplotypes + j];
@@ -781,6 +722,7 @@ void SampleAllelicExpression::saveStackSums(std::string filename, std::string sa
         outfile << sum << std::endl;
     }
 }
+
 
 void SampleAllelicExpression::applyTranscriptLength() {
     double sum = 0.0;

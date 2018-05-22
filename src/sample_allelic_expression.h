@@ -18,15 +18,9 @@
  * along with this software. If not, see <http://www.gnu.org/licenses/>.
  */
 
-//
-//  sample_allelic_expression.h
-//
-//  Created by Glen Beane on 8/22/14.
-//
 
 #ifndef SAMPLE_ALLELIC_EXPRESSION_H
 #define SAMPLE_ALLELIC_EXPRESSION_H
-
 
 #include "alignment_incidence_matrix.h"
 #include "utilities.h"
@@ -35,7 +29,6 @@
 class SampleAllelicExpression {
 
 public:
-
     enum model {MODEL_1 = 1, MODEL_2 = 2, MODEL_3 = 3, MODEL_4 = 4};
 
     SampleAllelicExpression(AlignmentIncidenceMatrix *alignment_incidence, double tolerance);
@@ -49,8 +42,6 @@ public:
     void applyTranscriptLength();
 
 private:
-
-
     AlignmentIncidenceMatrix *alignment_incidence_;
 
     double *current_;

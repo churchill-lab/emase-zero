@@ -19,18 +19,11 @@
  * along with this software. If not, see <http://www.gnu.org/licenses/>.
  */
 
-//
-//  alignment_incidence_matrix.cpp
-//
-//
-//  Created by Glen Beane on 8/20/14.
-//
-
 #include <algorithm>
-#include <iostream>
 #include <fstream>
-#include <sstream>
 #include <map>
+#include <iostream>
+#include <sstream>
 
 #include "alignment_incidence_matrix.h"
 
@@ -74,8 +67,8 @@ AlignmentIncidenceMatrix::AlignmentIncidenceMatrix(std::vector<std::string> hapl
 {
     has_gene_mappings_ = false;
     has_equivalence_classes_ = true;
-
     total_reads_ = 0;
+
     for (auto it = counts.begin(); it != counts.end(); ++it) {
         total_reads_ += *it;
     }
@@ -130,7 +123,6 @@ bool AlignmentIncidenceMatrix::loadGeneMappings(std::string filename) {
     tx_to_gene.resize(num_transcripts(), -1);
     gene_names.clear();
 
-
     // build a map so we can lookup transcript IDs by transcript names
     int t_index = 0;
     for (auto it = transcript_names.begin(); it != transcript_names.end(); ++it) {
@@ -156,6 +148,7 @@ bool AlignmentIncidenceMatrix::loadGeneMappings(std::string filename) {
         // the gene name,  the other tokens are the trascripts that belong to
         // that gene
         gene_names.push_back(tokens[0]);
+
         for (int i = 1; i < tokens.size(); ++i) {
             // make sure the transcript name is one we know about:
             auto transcript_search = transcript_name_to_id.find(tokens[i]);
@@ -179,6 +172,7 @@ bool AlignmentIncidenceMatrix::loadGeneMappings(std::string filename) {
     }
 
     bool bail = false;
+
     for (int i = 0; i < tx_to_gene.size(); ++i) {
         if (tx_to_gene[i] == -1) {
             std::cerr << "No mapping information for " << transcript_names[i] << std::endl;
@@ -196,7 +190,6 @@ bool AlignmentIncidenceMatrix::loadGeneMappings(std::string filename) {
 
 void AlignmentIncidenceMatrix::loadTranscriptLengths(std::string filename) {
     std::ifstream input(filename);
-
 
     // since we don't want to assume that the order the transcripts appear in
     // the length file is the same as the order they are obtained from the input
@@ -230,7 +223,6 @@ void AlignmentIncidenceMatrix::loadTranscriptLengths(std::string filename) {
     std::string id;
 
     while (input >> id >> length) {
-
         // need to split t_name:  form read from file is transcriptName_haplotypeName
         std::stringstream id_stringstream(id);
         std::getline(id_stringstream, t_name, '_');
@@ -268,7 +260,6 @@ void AlignmentIncidenceMatrix::loadTranscriptLengths(std::string filename) {
 
         // it exists,  add its lenght to our list of transcript lengths
         transcript_lengths_[transcript_search->second * num_haplotypes() + hap_search->second] = std::max(length, 1.0);
-
     }
 
     if (lengths_loaded != total_elements) {
