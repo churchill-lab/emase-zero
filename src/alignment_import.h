@@ -23,6 +23,7 @@
 
 
 AlignmentIncidenceMatrix *loadFromBin(std::string filename, int sample_id = -1);
-int getBinVersion(std::string filename);
+bool isGZipped(std::string filename);
+int getBinFormat(std::string filename);
 
 #endif

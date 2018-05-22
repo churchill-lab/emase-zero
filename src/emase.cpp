@@ -181,11 +181,16 @@ int main(int argc, char **argv) {
         std::cout << "Transcript Length File: None\n";
     }
 
-    int version = getBinVersion(input_filename);
+    int gzipped = isGZipped(input_filename);
+    int format = getBinFormat(input_filename);
+
+    std::cout << "Compressed: " << gzipped << "\n";
+    std::cout << "Format: " << format << "\n";
+
 
     if (samples_str.length() > 0) {
-        if (version != 2) {
-            std::cerr << "\n[ERROR] Samples are not supported in version 0 or 1\n";
+        if (format != 2) {
+            std::cerr << "\n[ERROR] Samples are not supported in format 0 or 1\n";
             print_help();
             return 1;
         }
@@ -213,7 +218,7 @@ int main(int argc, char **argv) {
 
     // Loop through all the samples specified
     for (int i = sample_start; i < sample_end + 1; ++i) {
-        if (version == 2) {
+        if (format == 2) {
             std::cout << "Loading " << input_filename << ", Sample " << i << std::endl;
             aim = loadFromBin(input_filename, i);
         } else {
@@ -326,7 +331,7 @@ int main(int argc, char **argv) {
             remove(output_filename_counts.c_str());
         }
 
-        if (version == 2) {
+        if (format == 2) {
             sae.saveStackSums(output_filename, sample_names[i]);
             sae.updateNoApplyTL(model);
             sae.saveStackSums(output_filename_counts, sample_names[i]);

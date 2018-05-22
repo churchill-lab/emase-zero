@@ -21,13 +21,13 @@
 #include <fstream>
 #include <iostream>
 #include <string>
+#include <zlib.h>
 
 #include "alignment_incidence_matrix.h"
 
-int getBinVersion(std::string filename) {
-    std::ifstream infile(filename, std::ios::binary);
-
-    int version;
+// check the file magic's number to see if it is gzipped
+bool isGZipped(std::string filename) {
+    std::ifstream infile(filename, std::ios::in|std::ios::binary);
 
     if (!infile.is_open()) {
         // something went wrong reading from stream for now return NULL
@@ -35,9 +35,72 @@ int getBinVersion(std::string filename) {
         return -1;
     }
 
-    infile.read((char*)&version, sizeof(int));
+    char bytes[2];
 
-    return version;
+    infile.read(bytes, 2);
+
+    if ((bytes[0] == '\x1F') && (bytes[1] == '\x8B')) {
+        return true;
+    }
+
+    return false;
+}
+
+
+// get the format version number
+int getBinFormat(std::string filename) {
+    bool gz = isGZipped(filename);
+    int format = -1;
+
+    if (gz) {
+        gzFile infile = (gzFile) gzopen(filename.c_str(), "rb");
+        gzrewind(infile);
+
+        int len = gzread(infile, &format, sizeof(format));
+
+        gzclose(infile);
+    } else {
+        std::ifstream infile(filename, std::ios::in|std::ios::binary);
+
+        if (!infile.is_open()) {
+            // something went wrong reading from stream for now return NULL
+            std::cerr << "ERROR LOADING FILE " << filename << std::endl;
+            return -1;
+        }
+
+        infile.read((char *) &format, sizeof(int));
+    }
+
+    if (format < 0 || format > 2) {
+        std::cerr << "Unable to determine file format, may be corrupt!" << filename << std::endl;
+        return -1;
+    }
+
+    return format;
+}
+
+int readIntFromFile(gzFile gzinfile, std::ifstream &infile) {
+    int i;
+
+    if (infile.is_open()) {
+        infile.read((char*)&i, sizeof(i));
+    } else {
+        gzread(gzinfile, &i, sizeof(i));
+    }
+
+    return i;
+}
+
+char readCharFromFile(gzFile gzinfile, std::ifstream &infile) {
+    char c;
+
+    if (infile.is_open()) {
+        infile.read(&c, sizeof(c));
+    } else {
+        gzread(gzinfile, &c, sizeof(c));
+    }
+
+    return c;
 }
 
 
@@ -65,9 +128,20 @@ AlignmentIncidenceMatrix *loadFromBin(std::string filename, int sample_idx = -1)
     std::vector<int> row_ptr;
     std::vector<int> counts;
 
-    std::ifstream infile(filename, std::ios::binary);
+    bool gzipped = isGZipped(filename);
+    int format = getBinFormat(filename);
 
-    int version;
+    std::ifstream infile;
+    gzFile gzinfile;
+
+    if (gzipped) {
+        std::cout << "GZIPPPPPPED" << std::endl;
+        gzinfile = (gzFile) gzopen(filename.c_str(), "rb");
+    } else {
+        std::cout << "NORMAL" << std::endl;
+        infile.open(filename, std::ios::binary);
+    }
+
     int num_transcripts;
     int num_haplotypes;
     int num_reads;
@@ -76,30 +150,23 @@ AlignmentIncidenceMatrix *loadFromBin(std::string filename, int sample_idx = -1)
 
     std::vector<char> buffer;
 
-    if (!infile.is_open()) {
-        // something went wrong reading from stream for now return NULL
-        std::cerr << "ERROR LOADING FILE " << filename << std::endl;
-        return NULL;
-    }
-
-    infile.read((char*)&version, sizeof(int));
-
-    if (version != 0 && version != 1 && version != 2) {
+    if (format != 0 && format != 1 && format != 2) {
         std::cerr << "Binary input file is unknown format\n";
         return NULL;
     }
 
+    readIntFromFile(gzinfile, infile);
+
     //load list of transcript names
-    infile.read((char*)&num_transcripts, sizeof(int));
+    num_transcripts = readIntFromFile(gzinfile, infile);
     transcripts.reserve(num_transcripts);
 
     for (int i = 0; i < num_transcripts; ++i) {
-        infile.read((char*)&size, sizeof(int));
+        size = readIntFromFile(gzinfile, infile);
         buffer.clear();
 
         for (int j = 0; j < size; ++j) {
-            char c;
-            infile.read(&c, sizeof(c));
+            char c = readCharFromFile(gzinfile, infile);
             buffer.push_back(c);
         }
         buffer.push_back('\0');
@@ -107,23 +174,22 @@ AlignmentIncidenceMatrix *loadFromBin(std::string filename, int sample_idx = -1)
     }
 
     //load list of haplotype names
-    infile.read((char*)&num_haplotypes, sizeof(int));
+    num_haplotypes = readIntFromFile(gzinfile, infile);
     haplotypes.reserve(num_haplotypes);
 
     for (int i = 0; i < num_haplotypes; ++i) {
-        infile.read((char*)&size, sizeof(int));
+        size = readIntFromFile(gzinfile, infile);
         buffer.clear();
 
         for (int j = 0; j < size; ++j) {
-            char c;
-            infile.read(&c, sizeof(c));
+            char c = readCharFromFile(gzinfile, infile);
             buffer.push_back(c);
         }
         buffer.push_back('\0');
         haplotypes.push_back(std::string(buffer.data()));
     }
 
-    if (version == 0) {
+    if (format == 0) {
         // load alignments, use default counts of 1 per alignment
         // format is "read_id transcript_id value"
 
@@ -132,23 +198,22 @@ AlignmentIncidenceMatrix *loadFromBin(std::string filename, int sample_idx = -1)
         int value;
 
         // load list of read names
-        infile.read((char*)&num_reads, sizeof(int));
+        num_reads = readIntFromFile(gzinfile, infile);
         reads.reserve(num_reads);
 
         for (int i = 0; i < num_reads; i++) {
-            infile.read((char*)&size, sizeof(int));
+            size = readIntFromFile(gzinfile, infile);
             buffer.clear();
 
             for (int j = 0; j < size; j++) {
-                char c;
-                infile.read(&c, sizeof(c));
+                char c = readCharFromFile(gzinfile, infile);
                 buffer.push_back(c);
             }
             buffer.push_back('\0');
             reads.push_back(std::string(buffer.data()));
         }
 
-        infile.read((char*)&num_alignments, sizeof(int));
+        num_alignments = readIntFromFile(gzinfile, infile);
 
         values.reserve(num_alignments);
         col_ind.reserve(num_alignments);
@@ -158,9 +223,9 @@ AlignmentIncidenceMatrix *loadFromBin(std::string filename, int sample_idx = -1)
         int last_read = 0;
 
         for (int i = 0; i < num_alignments; ++i) {
-            infile.read((char*)&read_id, sizeof(int));
-            infile.read((char*)&transcript_id, sizeof(int));
-            infile.read((char*)&value, sizeof(int));
+            read_id = readIntFromFile(gzinfile, infile);
+            transcript_id = readIntFromFile(gzinfile, infile);
+            value = readIntFromFile(gzinfile, infile);
 
             // sanity check that read_id is not less than last_read
             if (read_id < last_read) {
@@ -182,19 +247,22 @@ AlignmentIncidenceMatrix *loadFromBin(std::string filename, int sample_idx = -1)
         row_ptr.push_back(num_alignments);
         aim = new AlignmentIncidenceMatrix(haplotypes, reads, transcripts, samples, col_ind, row_ptr, values);
 
-    } else if (version == 1) {
+    } else if (format == 1) {
         // load equivalence class, also includes counts
 
         int equivalence_id;
         int transcript_id;
         int value;
-        int num_classes;
+        int num_classes = readIntFromFile(gzinfile, infile);
 
-        infile.read((char*)&num_classes, sizeof(int));
         counts.resize(num_classes);
         infile.read((char*)&counts[0], num_classes*sizeof(int));
 
-        infile.read((char*)&num_alignments, sizeof(int));
+        for (int j = 0; j < num_classes; j++) {
+            counts.push_back(readIntFromFile(gzinfile, infile));
+        }
+
+        num_alignments = readIntFromFile(gzinfile, infile);
 
         values.reserve(num_alignments);
         col_ind.reserve(num_alignments);
@@ -203,9 +271,9 @@ AlignmentIncidenceMatrix *loadFromBin(std::string filename, int sample_idx = -1)
         row_ptr.push_back(0);
 
         for (int i = 0; i < num_alignments; ++i) {
-            infile.read((char*)&equivalence_id, sizeof(int));
-            infile.read((char*)&transcript_id, sizeof(int));
-            infile.read((char*)&value, sizeof(int));
+            equivalence_id = readIntFromFile(gzinfile, infile);
+            transcript_id = readIntFromFile(gzinfile, infile);
+            value = readIntFromFile(gzinfile, infile);
 
             // sanity check that read_id is not less than last_read
             if (equivalence_id < last_ec) {
@@ -230,9 +298,8 @@ AlignmentIncidenceMatrix *loadFromBin(std::string filename, int sample_idx = -1)
         aim = new AlignmentIncidenceMatrix(haplotypes, reads, transcripts, samples,
                                             col_ind, row_ptr, values,
                                             counts);
-    } else if (version == 2) {
+    } else if (format == 2) {
         // multisample
-
         std::cout << "Sample idx: " << sample_idx << std::endl;
 
         if (sample_idx == -1) {
@@ -243,23 +310,19 @@ AlignmentIncidenceMatrix *loadFromBin(std::string filename, int sample_idx = -1)
         int equivalence_id;
         int transcript_id;
         int value;
-        int num_crs;
-        int num_ecs;
-        int nnz;
 
         // read crs
-        infile.read((char*)&num_crs, sizeof(int));
+        int num_crs = readIntFromFile(gzinfile, infile);
         samples.reserve(num_crs);
 
         std::cout << "CRS: " << num_crs << std::endl;
 
         for (int i = 0; i < num_crs; ++i) {
-            infile.read((char*)&size, sizeof(int));
+            size = readIntFromFile(gzinfile, infile);
             buffer.clear();
 
-            for (int j = 0; j < size; ++j) {
-                char c;
-                infile.read(&c, sizeof(c));
+            for (int j = 0; j < size; j++) {
+                char c = readCharFromFile(gzinfile, infile);
                 buffer.push_back(c);
             }
             buffer.push_back('\0');
@@ -272,11 +335,11 @@ AlignmentIncidenceMatrix *loadFromBin(std::string filename, int sample_idx = -1)
         }
 
         // read ec
-        infile.read((char*)&num_ecs, sizeof(int));
+        int num_ecs = readIntFromFile(gzinfile, infile);
         std::cout << "EC: " << num_ecs << std::endl;
 
         // read nnz
-        infile.read((char*)&nnz, sizeof(int));
+        int nnz = readIntFromFile(gzinfile, infile);
         std::cout << "NNZ: " << nnz << std::endl;
 
         //read "N" matrix 
@@ -288,9 +351,23 @@ AlignmentIncidenceMatrix *loadFromBin(std::string filename, int sample_idx = -1)
         columns.reserve(nnz);
         data.reserve(nnz);
 
-        infile.read((char*)&row_offsets[0], (num_ecs + 1) * sizeof(int));
-        infile.read((char*)&columns[0], nnz * sizeof(int));
-        infile.read((char*)&data[0], nnz * sizeof(int));
+
+        //infile.read((char*)&row_offsets[0], (num_ecs + 1) * sizeof(int));
+        //infile.read((char*)&columns[0], nnz * sizeof(int));
+        //infile.read((char*)&data[0], nnz * sizeof(int));
+
+        // TODO: better way to do this, but need to make utility function
+        for (int j = 0; j < num_ecs + 1; j++) {
+            row_offsets.push_back(readIntFromFile(gzinfile, infile));
+        }
+
+        for (int j = 0; j < nnz; j++) {
+            columns.push_back(readIntFromFile(gzinfile, infile));
+        }
+
+        for (int j = 0; j < nnz; j++) {
+            data.push_back(readIntFromFile(gzinfile, infile));
+        }
 
         // decipher csr to just column data
         std::vector<int> column_data(num_ecs, 0);
@@ -311,7 +388,7 @@ AlignmentIncidenceMatrix *loadFromBin(std::string filename, int sample_idx = -1)
         }
 
         //read "A" matrix 
-        infile.read((char*)&num_alignments, sizeof(int));
+        int num_alignments = readIntFromFile(gzinfile, infile);
         std::cout << "NUM ALIGNMENTS: " << num_alignments << std::endl;
 
         values.reserve(num_alignments);
@@ -321,9 +398,9 @@ AlignmentIncidenceMatrix *loadFromBin(std::string filename, int sample_idx = -1)
         row_ptr.push_back(0);
 
         for (int i = 0; i < num_alignments; ++i) {
-            infile.read((char*)&equivalence_id, sizeof(int));
-            infile.read((char*)&transcript_id, sizeof(int));
-            infile.read((char*)&value, sizeof(int));
+            equivalence_id = readIntFromFile(gzinfile, infile);
+            transcript_id = readIntFromFile(gzinfile, infile);
+            value = readIntFromFile(gzinfile, infile);
 
             // sanity check that read_id is not less than last_read
             if (equivalence_id < last_ec) {
