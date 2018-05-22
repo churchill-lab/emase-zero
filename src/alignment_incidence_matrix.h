@@ -47,6 +47,7 @@ public:
     AlignmentIncidenceMatrix(std::vector<std::string> haplotypes,
                              std::vector<std::string> reads,
                              std::vector<std::string> transcripts,
+                             std::vector<std::string> samples,
                              std::vector<int> col_ind,
                              std::vector<int> row_ptr,
                              std::vector<int> val);
@@ -54,6 +55,7 @@ public:
     AlignmentIncidenceMatrix(std::vector<std::string> haplotypes,
                              std::vector<std::string> reads,
                              std::vector<std::string> transcripts,
+                             std::vector<std::string> samples,
                              std::vector<int> col_ind,
                              std::vector<int> row_ptr,
                              std::vector<int> val,
@@ -68,6 +70,10 @@ public:
         return transcript_names.size();
     }
 
+    inline std::vector<std::string>::size_type num_samples() {
+        return sample_names.size();
+    }
+
     inline std::vector<std::string>::size_type num_alignment_classes() {
         return row_ptr.size() - 1;
     }
@@ -78,6 +84,10 @@ public:
 
     inline std::vector<std::string> get_haplotype_names() {
         return haplotype_names;
+    }
+
+    inline std::vector<std::string> get_sample_names() {
+        return sample_names;
     }
 
     inline std::vector<std::string> get_gene_names() {
@@ -112,6 +122,7 @@ private:
     std::vector<std::string> haplotype_names;
     std::vector<std::string> transcript_names;
     std::vector<std::string> read_names;
+    std::vector<std::string> sample_names;
 
     std::vector<std::string> gene_names;
     std::vector<int> tx_to_gene;

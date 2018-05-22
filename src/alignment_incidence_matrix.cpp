@@ -37,12 +37,14 @@
 AlignmentIncidenceMatrix::AlignmentIncidenceMatrix(std::vector<std::string> haplotypes,
                                                    std::vector<std::string> reads,
                                                    std::vector<std::string> transcripts,
+                                                   std::vector<std::string> samples,
                                                    std::vector<int> col_ind,
                                                    std::vector<int> row_ptr,
                                                    std::vector<int> val) :
     haplotype_names(haplotypes),
     transcript_names(transcripts),
     read_names(reads),
+    sample_names(samples),
     col_ind(col_ind),
     row_ptr(row_ptr),
     val(val)
@@ -56,6 +58,7 @@ AlignmentIncidenceMatrix::AlignmentIncidenceMatrix(std::vector<std::string> hapl
 AlignmentIncidenceMatrix::AlignmentIncidenceMatrix(std::vector<std::string> haplotypes,
                                                    std::vector<std::string> reads,
                                                    std::vector<std::string> transcripts,
+                                                   std::vector<std::string> samples,
                                                    std::vector<int> col_ind,
                                                    std::vector<int> row_ptr,
                                                    std::vector<int> val,
@@ -63,6 +66,7 @@ AlignmentIncidenceMatrix::AlignmentIncidenceMatrix(std::vector<std::string> hapl
     haplotype_names(haplotypes),
     transcript_names(transcripts),
     read_names(reads),
+    sample_names(samples),
     col_ind(col_ind),
     row_ptr(row_ptr),
     val(val),
@@ -202,7 +206,7 @@ void AlignmentIncidenceMatrix::loadTranscriptLengths(std::string filename) {
 
     if (!input.is_open()) {
         // something went wrong reading from stream for now just bail out
-        std::cerr << "ERROR LOADING TRANSCRIPT LENGHT FILE " << filename << std::endl;
+        std::cerr << "ERROR LOADING TRANSCRIPT LENGTH FILE " << filename << std::endl;
         exit(1);
     }
 

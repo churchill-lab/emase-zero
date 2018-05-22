@@ -45,6 +45,7 @@ public:
     bool converged(double &change);
     inline int size() {return num_haplotypes * num_transcripts;}
     void saveStackSums(std::string filename);
+    void saveStackSums(std::string filename, std::string sample_name);
     void applyTranscriptLength();
 
 private:
