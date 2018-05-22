@@ -25,6 +25,24 @@
 #include "alignment_incidence_matrix.h"
 
 
+int getBinVersion(std::string filename)
+{
+    std::ifstream infile(filename, std::ios::binary);
+
+    int version;
+
+    if (!infile.is_open()) {
+        // something went wrong reading from stream for now return NULL
+        std::cerr << "ERROR LOADING FILE " << filename << std::endl;
+        return -1;
+    }
+
+    infile.read((char*)&version, sizeof(int));
+
+    return version;
+}
+
+
 /* This function will read in a binary file produced by Matt Vincent's
    Kallisto exporter (https://github.com/churchill-lab/kallisto-export) and
    create an AlignmentIncidenceMatrix instance.  A pointer to the new aim
@@ -33,7 +51,7 @@
 
    This code assumes that the reads/equivalence classes are stored in order.
  */
-AlignmentIncidenceMatrix *loadFromBin(std::string filename)
+AlignmentIncidenceMatrix *loadFromBin(std::string filename, int sample_idx = -1)
 {
     AlignmentIncidenceMatrix *aim = NULL;
 
@@ -44,6 +62,7 @@ AlignmentIncidenceMatrix *loadFromBin(std::string filename)
     std::vector<std::string> haplotypes;
     std::vector<std::string> reads;
     std::vector<std::string> transcripts;
+    std::vector<std::string> samples;
     std::vector<int> values;
     std::vector<int> col_ind;
     std::vector<int> row_ptr;
@@ -69,158 +88,276 @@ AlignmentIncidenceMatrix *loadFromBin(std::string filename)
 
     infile.read((char*)&version, sizeof(int));
 
-
-    if (version == 0 || version == 1) {
-
-        //load list of transcript names
-        infile.read((char*)&num_transcripts, sizeof(int));
-        transcripts.reserve(num_transcripts);
-
-        for (int i = 0; i < num_transcripts; ++i) {
-            infile.read((char*)&size, sizeof(int));
-            buffer.clear();
-
-            for (int j = 0; j < size; ++j) {
-                char c;
-                infile.read(&c, sizeof(c));
-                buffer.push_back(c);
-            }
-            buffer.push_back('\0');
-            transcripts.push_back(std::string(buffer.data()));
-        }
-
-        //load list of haplotype names
-        infile.read((char*)&num_haplotypes, sizeof(int));
-        haplotypes.reserve(num_haplotypes);
-
-        for (int i = 0; i < num_haplotypes; ++i) {
-            infile.read((char*)&size, sizeof(int));
-            buffer.clear();
-
-            for (int j = 0; j < size; ++j) {
-                char c;
-                infile.read(&c, sizeof(c));
-                buffer.push_back(c);
-            }
-            buffer.push_back('\0');
-            haplotypes.push_back(std::string(buffer.data()));
-        }
-
-
-        if (version == 0) {
-            // load alignments, use default counts of 1 per alignment
-            // format is "read_id transcript_id value"
-
-            int read_id;
-            int transcript_id;
-            int value;
-
-
-            // load list of read names
-            infile.read((char*)&num_reads, sizeof(int));
-            reads.reserve(num_reads);
-
-            for (int i = 0; i < num_reads; i++) {
-                infile.read((char*)&size, sizeof(int));
-                buffer.clear();
-
-                for (int j = 0; j < size; j++) {
-                    char c;
-                    infile.read(&c, sizeof(c));
-                    buffer.push_back(c);
-                }
-                buffer.push_back('\0');
-                reads.push_back(std::string(buffer.data()));
-            }
-
-            infile.read((char*)&num_alignments, sizeof(int));
-
-            values.reserve(num_alignments);
-            col_ind.reserve(num_alignments);
-
-            // first read values start at index 0
-            row_ptr.push_back(0);
-            int last_read = 0;
-
-            for (int i = 0; i < num_alignments; ++i) {
-                infile.read((char*)&read_id, sizeof(int));
-                infile.read((char*)&transcript_id, sizeof(int));
-                infile.read((char*)&value, sizeof(int));
-
-                // sanity check that read_id is not less than last_read
-                if (read_id < last_read) {
-                    // this is a problem with the file
-                    std::cerr << "ERROR: binary input file must be sorted\n";
-                    return NULL;
-                }
-
-                values.push_back(value);
-                col_ind.push_back(transcript_id);
-
-                if (read_id != last_read) {
-                    // we've just transitioned to a new read, so we need to
-                    // record the starting index in row_ptr;
-                    row_ptr.push_back(i);
-                    last_read = read_id;
-                }
-            }
-            row_ptr.push_back(num_alignments);
-            aim = new AlignmentIncidenceMatrix(haplotypes, reads, transcripts, col_ind, row_ptr, values);
-        }
-        else {
-            // load equivalence class, also includes counts
-
-            int equivalence_id;
-            int transcript_id;
-            int value;
-            int num_classes;
-
-            infile.read((char*)&num_classes, sizeof(int));
-            counts.resize(num_classes);
-            infile.read((char*)&counts[0], num_classes*sizeof(int));
-
-            infile.read((char*)&num_alignments, sizeof(int));
-
-            values.reserve(num_alignments);
-            col_ind.reserve(num_alignments);
-
-            int last_ec = 0;
-            row_ptr.push_back(0);
-
-            for (int i = 0; i < num_alignments; ++i) {
-                infile.read((char*)&equivalence_id, sizeof(int));
-                infile.read((char*)&transcript_id, sizeof(int));
-                infile.read((char*)&value, sizeof(int));
-
-                // sanity check that read_id is not less than last_read
-                if (equivalence_id < last_ec) {
-                    // this is a problem with the file
-                    // XXX version 1 files are small enough that we could
-                    // probably read this all in and then sort it, and then
-                    // iterate over it and build the CRS representation.
-                    std::cerr << "ERROR: binary input file must be sorted\n";
-                    return NULL;
-                }
-
-                values.push_back(value);
-                col_ind.push_back(transcript_id);
-
-                if (equivalence_id != last_ec) {
-                    // record the start index when we transition to a new read
-                    row_ptr.push_back(i);
-                    last_ec = equivalence_id;
-                }
-            }
-            row_ptr.push_back(num_alignments);
-            aim = new AlignmentIncidenceMatrix(haplotypes, reads, transcripts,
-                                               col_ind, row_ptr, values,
-                                               counts);
-        }
-    }
-    else {
-        //unknown version!
+    if (version != 0 && version != 1 && version != 2) {
         std::cerr << "Binary input file is unknown format\n";
         return NULL;
+    }
+
+    //load list of transcript names
+    infile.read((char*)&num_transcripts, sizeof(int));
+    transcripts.reserve(num_transcripts);
+
+    for (int i = 0; i < num_transcripts; ++i) {
+        infile.read((char*)&size, sizeof(int));
+        buffer.clear();
+
+        for (int j = 0; j < size; ++j) {
+            char c;
+            infile.read(&c, sizeof(c));
+            buffer.push_back(c);
+        }
+        buffer.push_back('\0');
+        transcripts.push_back(std::string(buffer.data()));
+    }
+
+    //load list of haplotype names
+    infile.read((char*)&num_haplotypes, sizeof(int));
+    haplotypes.reserve(num_haplotypes);
+
+    for (int i = 0; i < num_haplotypes; ++i) {
+        infile.read((char*)&size, sizeof(int));
+        buffer.clear();
+
+        for (int j = 0; j < size; ++j) {
+            char c;
+            infile.read(&c, sizeof(c));
+            buffer.push_back(c);
+        }
+        buffer.push_back('\0');
+        haplotypes.push_back(std::string(buffer.data()));
+    }
+
+
+    if (version == 0) {
+        // load alignments, use default counts of 1 per alignment
+        // format is "read_id transcript_id value"
+
+        int read_id;
+        int transcript_id;
+        int value;
+
+
+        // load list of read names
+        infile.read((char*)&num_reads, sizeof(int));
+        reads.reserve(num_reads);
+
+        for (int i = 0; i < num_reads; i++) {
+            infile.read((char*)&size, sizeof(int));
+            buffer.clear();
+
+            for (int j = 0; j < size; j++) {
+                char c;
+                infile.read(&c, sizeof(c));
+                buffer.push_back(c);
+            }
+            buffer.push_back('\0');
+            reads.push_back(std::string(buffer.data()));
+        }
+
+        infile.read((char*)&num_alignments, sizeof(int));
+
+        values.reserve(num_alignments);
+        col_ind.reserve(num_alignments);
+
+        // first read values start at index 0
+        row_ptr.push_back(0);
+        int last_read = 0;
+
+        for (int i = 0; i < num_alignments; ++i) {
+            infile.read((char*)&read_id, sizeof(int));
+            infile.read((char*)&transcript_id, sizeof(int));
+            infile.read((char*)&value, sizeof(int));
+
+            // sanity check that read_id is not less than last_read
+            if (read_id < last_read) {
+                // this is a problem with the file
+                std::cerr << "ERROR: binary input file must be sorted\n";
+                return NULL;
+            }
+
+            values.push_back(value);
+            col_ind.push_back(transcript_id);
+
+            if (read_id != last_read) {
+                // we've just transitioned to a new read, so we need to
+                // record the starting index in row_ptr;
+                row_ptr.push_back(i);
+                last_read = read_id;
+            }
+        }
+        row_ptr.push_back(num_alignments);
+        aim = new AlignmentIncidenceMatrix(haplotypes, reads, transcripts, samples, col_ind, row_ptr, values);
+
+    } else if (version == 1) {
+        // load equivalence class, also includes counts
+
+        int equivalence_id;
+        int transcript_id;
+        int value;
+        int num_classes;
+
+        infile.read((char*)&num_classes, sizeof(int));
+        counts.resize(num_classes);
+        infile.read((char*)&counts[0], num_classes*sizeof(int));
+
+        infile.read((char*)&num_alignments, sizeof(int));
+
+        values.reserve(num_alignments);
+        col_ind.reserve(num_alignments);
+
+        int last_ec = 0;
+        row_ptr.push_back(0);
+
+        for (int i = 0; i < num_alignments; ++i) {
+            infile.read((char*)&equivalence_id, sizeof(int));
+            infile.read((char*)&transcript_id, sizeof(int));
+            infile.read((char*)&value, sizeof(int));
+
+            // sanity check that read_id is not less than last_read
+            if (equivalence_id < last_ec) {
+                // this is a problem with the file
+                // XXX version 1 files are small enough that we could
+                // probably read this all in and then sort it, and then
+                // iterate over it and build the CRS representation.
+                std::cerr << "ERROR: binary input file must be sorted\n";
+                return NULL;
+            }
+
+            values.push_back(value);
+            col_ind.push_back(transcript_id);
+
+            if (equivalence_id != last_ec) {
+                // record the start index when we transition to a new read
+                row_ptr.push_back(i);
+                last_ec = equivalence_id;
+            }
+        }
+        row_ptr.push_back(num_alignments);
+        aim = new AlignmentIncidenceMatrix(haplotypes, reads, transcripts, samples,
+                                            col_ind, row_ptr, values,
+                                            counts);
+    } else if (version == 2) {
+        // multisample
+
+        std::cout << "Sample idx: " << sample_idx << std::endl;
+
+        if (sample_idx == -1) {
+            std::cerr << "ERROR: sample index must be greater than or equal to 0\n";
+            return NULL;            
+        }
+
+        int equivalence_id;
+        int transcript_id;
+        int value;
+        int num_crs;
+        int num_ecs;
+        int nnz;
+
+        // read crs
+        infile.read((char*)&num_crs, sizeof(int));
+        samples.reserve(num_crs);
+
+        std::cout << "CRS: " << num_crs << std::endl;
+
+        for (int i = 0; i < num_crs; ++i) {
+            infile.read((char*)&size, sizeof(int));
+            buffer.clear();
+
+            for (int j = 0; j < size; ++j) {
+                char c;
+                infile.read(&c, sizeof(c));
+                buffer.push_back(c);
+            }
+            buffer.push_back('\0');
+            samples.push_back(std::string(buffer.data()));
+        }
+
+        if (sample_idx > num_crs) {
+            std::cerr << "ERROR: sample index must be between 0 and " << num_crs - 1 << "\n";
+            return NULL;
+        }
+
+        // read ec
+        infile.read((char*)&num_ecs, sizeof(int));
+        std::cout << "EC: " << num_ecs << std::endl;
+
+        // read nnz
+        infile.read((char*)&nnz, sizeof(int));
+        std::cout << "NNZ: " << nnz << std::endl;
+
+        //read "N" matrix 
+        std::vector<int> row_offsets;
+        std::vector<int> columns;
+        std::vector<int> data;
+
+        row_offsets.reserve(num_ecs + 1);
+        columns.reserve(nnz);
+        data.reserve(nnz);
+
+        infile.read((char*)&row_offsets[0], (num_ecs + 1) * sizeof(int));
+        infile.read((char*)&columns[0], nnz * sizeof(int));
+        infile.read((char*)&data[0], nnz * sizeof(int));
+
+        // decipher csr to just column data
+        std::vector<int> column_data(num_ecs, 0);
+
+        int idx = 0;
+
+        for (int row = 0; row < num_ecs; ++row) {
+            //std::cout << "ROW=" << row << std::endl;
+            for (int j = 0; j < row_offsets[row+1] - row_offsets[row]; ++j) {
+                //std::cout << "j=" << j << std::endl;
+                //std::cout << "idx=" << idx << std::endl;
+                if (columns[idx]  == sample_idx) {
+                    column_data[row] = data[idx];
+                }
+                //std::cout << column_data[row] << std::endl;
+                ++idx;
+            }
+        }
+
+        //read "A" matrix 
+        infile.read((char*)&num_alignments, sizeof(int));
+        std::cout << "NUM ALIGNMENTS: " << num_alignments << std::endl;
+
+        values.reserve(num_alignments);
+        col_ind.reserve(num_alignments);
+
+        int last_ec = 0;
+        row_ptr.push_back(0);
+
+        for (int i = 0; i < num_alignments; ++i) {
+            infile.read((char*)&equivalence_id, sizeof(int));
+            infile.read((char*)&transcript_id, sizeof(int));
+            infile.read((char*)&value, sizeof(int));
+
+            // sanity check that read_id is not less than last_read
+            if (equivalence_id < last_ec) {
+                // this is a problem with the file
+                // XXX version 1 files are small enough that we could
+                // probably read this all in and then sort it, and then
+                // iterate over it and build the CRS representation.
+                std::cerr << "ERROR: binary input file must be sorted\n";
+                return NULL;
+            }
+
+            values.push_back(value);
+            col_ind.push_back(transcript_id);
+
+            if (equivalence_id != last_ec) {
+                // record the start index when we transition to a new read
+                row_ptr.push_back(i);
+                last_ec = equivalence_id;
+            }
+        }
+        row_ptr.push_back(num_alignments);
+
+        std::cout << "Creating AlignmentIncidenceMatrix" << std::endl;
+        
+
+        aim = new AlignmentIncidenceMatrix(haplotypes, reads, transcripts, samples,
+                                            col_ind, row_ptr, values,
+                                            column_data);
     }
 
     return aim;

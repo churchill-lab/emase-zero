@@ -22,6 +22,7 @@
 #define ALIGNMENT_IMPORT_H
 
 
-AlignmentIncidenceMatrix *loadFromBin(std::string filename);
+AlignmentIncidenceMatrix *loadFromBin(std::string filename, int sample_id = -1);
+int getBinVersion(std::string filename);
 
 #endif

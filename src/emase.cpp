@@ -25,18 +25,21 @@
 //
 //  Created by Glen Beane on 8/20/14.
 //
+//  Augmented by Matt Vincent on 5/16/2018.
+//
 //
 
 #include <iostream>
 #include <iomanip>
 #include <cmath>
 #include <getopt.h>
+#include <stdio.h>
 
 #include "alignment_incidence_matrix.h"
 #include "sample_allelic_expression.h"
 #include "alignment_import.h"
 
-#define VERSION "0.2.4"
+#define VERSION "0.3.0"
 
 void print_help();
 
@@ -63,6 +66,9 @@ int main(int argc, char **argv)
     std::string transcript_length_file;
     std::string extension = ".pcl.bz2";
     std::string gene_file;
+    std::string samples_str;
+    int sample_start = 0;
+    int sample_end = 1;
 
     //getopt related variables
     int c;
@@ -78,13 +84,14 @@ int main(int argc, char **argv)
         {"transcript-lengths", required_argument, 0, 'l'},
         {"max-iterations", required_argument, 0, 'i'},
         {"gene-mappings", required_argument, 0, 'g'},
+        {"samples", required_argument, 0, 's'},
         {"verbose", no_argument, &verbose, 1},
         {"version", no_argument, 0, 'V'},
         {"tolerance", required_argument, 0, 't'},
         {0, 0, 0, 0}
     };
 
-    while ((c = getopt_long(argc, argv, "hm:o:l:i:bg:vVc:t:", long_options,
+    while ((c = getopt_long(argc, argv, "hm:o:l:i:g:s:vVc:t:", long_options,
                             &option_index)) != -1) {
         switch (c) {
             case 'h':
@@ -131,6 +138,10 @@ int main(int argc, char **argv)
 
             case 'g':
                 gene_file = std::string(optarg);
+                break;
+
+            case 's':
+                samples_str = std::string(optarg);
                 break;
 
             case 'v':
@@ -191,120 +202,169 @@ int main(int argc, char **argv)
         std::cout << "Transcript Length File: None\n";
     }
 
+    int version = getBinVersion(input_filename);
+
+    if (samples_str.length() > 0) {
+        if (version != 2) {
+            std::cerr << "\n[ERROR] Samples are not supported in version 0 or 1\n";
+            print_help();
+            return 1;
+        }
+
+        std::size_t location = samples_str.find(':');
+        if (location > 0) {
+            std::string s_start = samples_str.substr(0, location);
+            std::string s_end = samples_str.substr(location + 1);
+
+            sample_start = std::stoi(s_start);
+            sample_end = std::stoi(s_end);
+        } else {
+            sample_start = std::stoi(samples_str);
+            sample_end = sample_start;
+        }
+        
+        std::cout << "Sample start: " << sample_start << std::endl;
+        std::cout << "Sample end: " << sample_end << std::endl;
+    }
+
     std::cout << "EM Model: " << model << std::endl
               << "Output File (TPM): " << output_filename << std::endl
               << "Output File (Counts): " << output_filename_counts << std::endl
               << "----------------------------------------------------\n\n\n";
 
-    std::cout << "Loading " << input_filename << "..." << std::endl;		
-    aim = loadFromBin(input_filename);		
-    
-    if (!aim) {		
-        std::cerr << "Error loading binary input file\n";		
-        return 1;		
-    }		
-             
-    std::vector<std::string> hap_names = aim->get_haplotype_names();
+    for (int i = sample_start; i < sample_end + 1; ++i) {
 
-    if (verbose) {
-        std::cout << "File had the following haplotype names:\n";
-        for (auto it = hap_names.begin(); it != hap_names.end(); ++it) {
-            std::cout << *it << "\t";
+        if (version == 2) {
+            std::cout << "Loading " << input_filename << ", Sample " << i << std::endl;
+            aim = loadFromBin(input_filename, i);
+        } else {
+            std::cout << "Loading " << input_filename << "..." << std::endl;
+            aim = loadFromBin(input_filename);
         }
-        std::cout << std::endl;
-
-        if (aim->has_equivalence_classes()) {
-            std::cout << aim->num_alignment_classes()
-                      << " alignment classes loaded ("
-                      << aim->total_reads() << " total reads)\n";
-        }
-        else {
-            std::cout << aim->total_reads() << " reads loaded\n";
-        }
-        std::cout << aim->num_transcripts() << " transcripts\n";
-
-        std::cout << std::endl;
-    }
-
-    if (!transcript_length_file.empty()) {
-        if (verbose) {
-            std::cout << "Loading Transcript Length File "
-                      << transcript_length_file << std::endl;
-        }
-        aim->loadTranscriptLengths(transcript_length_file);
-    }
-
-    if (!gene_file.empty()) {
-        if (verbose) {
-            std::cout << "Loading Gene Mapping File " << gene_file << std::endl;
-        }
-        aim->loadGeneMappings(gene_file);
-    }
-
-    if (model != SampleAllelicExpression::MODEL_4 && !aim->has_gene_mappings()) {
-        if (!binary_input) {
-            std::cerr << "[ERROR] File does not contain transcript to gene mapping information.  Only normalization Model 4 can be used.\n";
-        }
-        else {
-            std::cerr << "[ERROR] Only model 4 is possible without gene to transcript information (--gene-mappings, -g). You specified another model.\n";
-        }
-        return 1;
-    }
-
-    t1 = clock();
-    SampleAllelicExpression sae(aim, tolerance);
-    t2 = clock();
-
-    if (verbose) {
-        diff = ((float)t2-(float)t1)/CLOCKS_PER_SEC;
-        std::cout << "Time for initializing stack sum = " << diff << "s"
-                  << std::endl;
-    }
-
-    if (max_iterations > 0) {
-        num_iterations = 0;
-        std::cout << "Running EM..." << std::endl;
-        double change;
-        double iteration_time;
-        bool  converged;
-        clock_t t1_inner, t2_inner;
+        
+        if (!aim) {		
+            std::cerr << "Error loading binary input file\n";		
+            return 1;		
+        }		
+                
+        std::vector<std::string> hap_names = aim->get_haplotype_names();
+        std::vector<std::string> sample_names = aim->get_sample_names();
 
         if (verbose) {
-            std::cout << std::setw(7) << "Iter No" << "    "
-                      << std::setw(8) << "Time(s)" << "    "
-                      << std::setw(16) << "Change" << std::endl
-                      << "-------    --------    ----------------\n";
+            std::cout << "File had the following haplotype names:\n";
+            for (auto it = hap_names.begin(); it != hap_names.end(); ++it) {
+                std::cout << *it << "\t";
+            }
+            std::cout << std::endl;
+
+            if (aim->has_equivalence_classes()) {
+                std::cout << aim->num_alignment_classes()
+                        << " alignment classes loaded ("
+                        << aim->total_reads() << " total reads)\n";
+            }
+            else {
+                std::cout << aim->total_reads() << " reads loaded\n";
+            }
+            std::cout << aim->num_transcripts() << " transcripts\n";
+
+            std::cout << std::endl;
+        }
+
+        if (!transcript_length_file.empty()) {
+            if (verbose) {
+                std::cout << "Loading Transcript Length File "
+                        << transcript_length_file << std::endl;
+            }
+            aim->loadTranscriptLengths(transcript_length_file);
+        }
+
+        if (!gene_file.empty()) {
+            if (verbose) {
+                std::cout << "Loading Gene Mapping File " << gene_file << std::endl;
+            }
+            aim->loadGeneMappings(gene_file);
+        }
+
+        if (model != SampleAllelicExpression::MODEL_4 && !aim->has_gene_mappings()) {
+            if (!binary_input) {
+                std::cerr << "[ERROR] File does not contain transcript to gene mapping information.  Only normalization Model 4 can be used.\n";
+            }
+            else {
+                std::cerr << "[ERROR] Only model 4 is possible without gene to transcript information (--gene-mappings, -g). You specified another model.\n";
+            }
+            return 1;
         }
 
         t1 = clock();
-        do {
-
-            t1_inner = clock();
-            sae.update(model);
-            t2_inner = clock();
-            converged = sae.converged(change);
-
-            if (verbose) {
-                std::cout << std::setw(7) << num_iterations + 1 << "    "
-                          << std::setw(8) << std::setprecision(3)
-                          << ((float)t2_inner - (float)t1_inner)/CLOCKS_PER_SEC
-                          << "    " << std::setw(16) << std::setprecision(1)
-                          << std::fixed << change << std::endl;
-            }
-        } while (++num_iterations < max_iterations && !converged);
+        SampleAllelicExpression sae(aim, tolerance);
         t2 = clock();
 
-        diff = ((float)t2 - (float)t1) / CLOCKS_PER_SEC;
-        std::cout << "Time for " << num_iterations << " iterations = " << diff
-                  << "s\n";
-        std::cout << "Time per iteration " << std::setprecision(2) << diff/num_iterations << "s\n";
+        if (verbose) {
+            diff = ((float)t2-(float)t1)/CLOCKS_PER_SEC;
+            std::cout << "Time for initializing stack sum = " << diff << "s"
+                    << std::endl;
+        }
+
+        if (max_iterations > 0) {
+            num_iterations = 0;
+            std::cout << "Running EM..." << std::endl;
+            double change;
+            double iteration_time;
+            bool  converged;
+            clock_t t1_inner, t2_inner;
+
+            if (verbose) {
+                std::cout << std::setw(7) << "Iter No" << "    "
+                        << std::setw(8) << "Time(s)" << "    "
+                        << std::setw(16) << "Change" << std::endl
+                        << "-------    --------    ----------------\n";
+            }
+
+            t1 = clock();
+            do {
+
+                t1_inner = clock();
+                sae.update(model);
+                t2_inner = clock();
+                converged = sae.converged(change);
+
+                if (verbose) {
+                    std::cout << std::setw(7) << num_iterations + 1 << "    "
+                            << std::setw(8) << std::setprecision(3)
+                            << ((float)t2_inner - (float)t1_inner)/CLOCKS_PER_SEC
+                            << "    " << std::setw(16) << std::setprecision(1)
+                            << std::fixed << change << std::endl;
+                }
+            } while (++num_iterations < max_iterations && !converged);
+            t2 = clock();
+
+            diff = ((float)t2 - (float)t1) / CLOCKS_PER_SEC;
+            std::cout << "Time for " << num_iterations << " iterations = " << diff
+                    << "s\n";
+            std::cout << "Time per iteration " << std::setprecision(2) << diff/num_iterations << "s\n";
+        }
+
+        std::cout << "Saving results..." << std::endl;
+
+        // remove the file at the start, append each sample
+        if (i == sample_start) {
+            remove(output_filename.c_str());
+            remove(output_filename_counts.c_str());
+        }
+
+        if (version == 2) {
+            sae.saveStackSums(output_filename, sample_names[i]);
+            sae.updateNoApplyTL(model);
+            sae.saveStackSums(output_filename_counts, sample_names[i]);
+            std::cout << "Done.\n";
+        } else {
+            sae.saveStackSums(output_filename);
+            sae.updateNoApplyTL(model);
+            sae.saveStackSums(output_filename_counts);
+        }
     }
 
-    std::cout << "Saving results..." << std::endl;
-    sae.saveStackSums(output_filename);
-    sae.updateNoApplyTL(model);
-    sae.saveStackSums(output_filename_counts);
-    std::cout << "Done.\n";
+    std::cout << "Program finished.\n";
 
     return 0;
 }
@@ -323,9 +383,6 @@ void print_help()
               << "OPTIONS\n"
               << "  --model (-m) <int>:\n"
               << "      Specify normalization model (can be 1-4, default=1)\n\n"
-              << "  --bin (-b):\n"
-              << "      Binary input mode, with this option emase2 will expect a binary\n"
-              << "      file exported from Kallisto as input\n\n"
               << "  --output (-o) <filename>:\n"
               << "      Specify filename for output file (default is input_basename.stacksum.tsv)\n\n"
               << "  --transcript-lengths (-l) <filename>:\n"
@@ -337,6 +394,9 @@ void print_help()
               << "      that belong to that gene\n\n"
               << "  --max-iterations (-i) <int>:\n"
               << "      Specify the maximum number of EM iterations. (Default 999)\n\n"
+              << "  --samples (-s) <string>:\n"
+              << "      Specify the sample indices.  Either one number or in the format\n"
+              << "      of <sample_start>:<sample_end>\n\n"
               << "  --tolerance (-t) <double>:\n"
               << "      Specify the convergence threshold. emase will terminate when the\n"
               << "      sum of the aboslute value of differences in the stack sum from one\n"
