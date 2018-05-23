@@ -8,6 +8,9 @@ default: emase-zero
 emase-zero: $(OBJ)
 	$(CC) -lz -o emase-zero $(OBJ)
 
+emase-dump: emase_bin.o
+	$(CC) -lz -o emase-dump emase_bin.o
+
 %.o: %.cpp
 	$(CC) -c -o $@ $< $(CFLAGS)
 

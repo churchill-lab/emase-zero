@@ -18,12 +18,21 @@
  * along with this software. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <cmath>
 #include <fstream>
+#include <getopt.h>
+#include <iomanip>
 #include <iostream>
-#include <string>
+#include <stdio.h>
 #include <zlib.h>
 
 #include "alignment_incidence_matrix.h"
+//#include "sample_allelic_expression.h"
+#include "alignment_import.h"
+
+#define VERSION "0.3.0"
+
+void print_help();
 
 // check the file magic's number to see if it is gzipped
 bool isGZipped(std::string filename) {
@@ -79,6 +88,7 @@ int getBinFormat(std::string filename) {
     return format;
 }
 
+
 int readIntFromFile(gzFile gzinfile, std::ifstream &infile) {
     int i;
 
@@ -104,21 +114,85 @@ char readCharFromFile(gzFile gzinfile, std::ifstream &infile) {
 }
 
 
-/* This function will read in a binary file produced by Matt Vincent's
-   Kallisto exporter (https://github.com/churchill-lab/kallisto-export) and
-   create an AlignmentIncidenceMatrix instance.  A pointer to the new aim
-   object will be returned.  If there is a problem loading the file, NULL will
-   be returned.
 
-   This code assumes that the reads/equivalence classes are stored in order.
- */
-AlignmentIncidenceMatrix *loadFromBin(std::string filename, int sample_idx = -1) {
-    AlignmentIncidenceMatrix *aim = NULL;
 
-    // the following vectors will hold the data we read in from the file,
-    // the values, col_ind, and row_ptr vectors are the compressed row format
-    // sparse matrix representation of the alignments.  counts are used for
-    // equivalence class data, it is not used for read data
+int main(int argc, char **argv) {
+    int sample_idx = -1;
+    int verbose = 0;
+
+    std::string gene_file;
+    std::string input_filename;
+
+    bool bad_args = false;
+
+    static struct option long_options[] = {
+        {"help", no_argument, 0, 'h'},
+        {"samples", required_argument, 0, 's'},
+        {"verbose", no_argument, &verbose, 1},
+        {"version", no_argument, 0, 'V'},
+        {0, 0, 0, 0}
+    };
+
+    int c;
+    int option_index = 0;
+
+    while ((c = getopt_long(argc, argv, "hs:vV", long_options,
+                            &option_index)) != -1) {
+        switch (c) {
+            case 'h':
+                print_help();
+                return 0;
+
+            case 's':
+                sample_idx = std::stoi(optarg);
+                break;
+
+            case 'v':
+                verbose = 1;
+                break;
+
+            case 'V':
+               std::cout << VERSION << std::endl;
+               return 0;
+
+            case '?':
+                bad_args = true;
+        }
+    }
+
+    if (bad_args) {
+        print_help();
+        return 1;
+    }
+
+    if (argc - optind == 1) {
+        input_filename = argv[optind];
+    } else {
+        std::cerr << "\n[ERROR] Missing required argument (input file name)\n";
+        print_help();
+        return 1;
+    }
+
+    std::cout << "\nemase-dump Version " << VERSION << std::endl <<std::endl;
+    std::cout << "Input File: " << input_filename << std::endl;
+
+    int gzipped = isGZipped(input_filename);
+    int format = getBinFormat(input_filename);
+
+    if ((sample_idx > 0) && (format != 2)) {
+        std::cerr << "\n[ERROR] Samples are not supported in format 0 or 1\n";
+        print_help();
+        return 1;
+    }
+
+    if (gzipped) {
+        std::cout << "Compressed: Yes" << std::endl;
+    } else {
+        std::cout << "Compressed: No" << std::endl;
+    }
+
+    std::cout << "Format: " << format << std::endl;
+
     std::vector<std::string> haplotypes;
     std::vector<std::string> reads;
     std::vector<std::string> transcripts;
@@ -128,18 +202,13 @@ AlignmentIncidenceMatrix *loadFromBin(std::string filename, int sample_idx = -1)
     std::vector<int> row_ptr;
     std::vector<int> counts;
 
-    bool gzipped = isGZipped(filename);
-    int format = getBinFormat(filename);
-
     std::ifstream infile;
     gzFile gzinfile;
 
     if (gzipped) {
-        std::cout << "GZIPPPPPPED" << std::endl;
-        gzinfile = (gzFile) gzopen(filename.c_str(), "rb");
+        gzinfile = (gzFile) gzopen(input_filename.c_str(), "rb");
     } else {
-        std::cout << "NORMAL" << std::endl;
-        infile.open(filename, std::ios::binary);
+        infile.open(input_filename, std::ios::binary);
     }
 
     int num_transcripts;
@@ -152,7 +221,7 @@ AlignmentIncidenceMatrix *loadFromBin(std::string filename, int sample_idx = -1)
 
     if (format != 0 && format != 1 && format != 2) {
         std::cerr << "Binary input file is unknown format\n";
-        return NULL;
+        return -1;
     }
 
     readIntFromFile(gzinfile, infile);
@@ -160,6 +229,8 @@ AlignmentIncidenceMatrix *loadFromBin(std::string filename, int sample_idx = -1)
     //load list of transcript names
     num_transcripts = readIntFromFile(gzinfile, infile);
     transcripts.reserve(num_transcripts);
+
+    std::cout << "Transcripts: " << num_transcripts << std::endl;
 
     for (int i = 0; i < num_transcripts; ++i) {
         size = readIntFromFile(gzinfile, infile);
@@ -171,11 +242,17 @@ AlignmentIncidenceMatrix *loadFromBin(std::string filename, int sample_idx = -1)
         }
         buffer.push_back('\0');
         transcripts.push_back(std::string(buffer.data()));
+
+        if (verbose) {
+            std::cout << std::string(buffer.data()) << std::endl;
+        }
     }
 
     //load list of haplotype names
     num_haplotypes = readIntFromFile(gzinfile, infile);
     haplotypes.reserve(num_haplotypes);
+
+    std::cout << "Haplotypes: " << num_haplotypes << std::endl;
 
     for (int i = 0; i < num_haplotypes; ++i) {
         size = readIntFromFile(gzinfile, infile);
@@ -187,7 +264,12 @@ AlignmentIncidenceMatrix *loadFromBin(std::string filename, int sample_idx = -1)
         }
         buffer.push_back('\0');
         haplotypes.push_back(std::string(buffer.data()));
+
+        if (verbose) {
+            std::cout << std::string(buffer.data()) << std::endl;
+        }
     }
+
 
     if (format == 0) {
         // load alignments, use default counts of 1 per alignment
@@ -201,6 +283,8 @@ AlignmentIncidenceMatrix *loadFromBin(std::string filename, int sample_idx = -1)
         num_reads = readIntFromFile(gzinfile, infile);
         reads.reserve(num_reads);
 
+        std::cout << "Reads: " << num_reads << std::endl;
+
         for (int i = 0; i < num_reads; i++) {
             size = readIntFromFile(gzinfile, infile);
             buffer.clear();
@@ -211,42 +295,25 @@ AlignmentIncidenceMatrix *loadFromBin(std::string filename, int sample_idx = -1)
             }
             buffer.push_back('\0');
             reads.push_back(std::string(buffer.data()));
+
+            if (verbose) {
+                std::cout << std::string(buffer.data()) << std::endl;
+            }
         }
 
         num_alignments = readIntFromFile(gzinfile, infile);
 
-        values.reserve(num_alignments);
-        col_ind.reserve(num_alignments);
-
-        // first read values start at index 0
-        row_ptr.push_back(0);
-        int last_read = 0;
+        std::cout << "Alignments: " << num_alignments << std::endl;
 
         for (int i = 0; i < num_alignments; ++i) {
             read_id = readIntFromFile(gzinfile, infile);
             transcript_id = readIntFromFile(gzinfile, infile);
             value = readIntFromFile(gzinfile, infile);
 
-            // sanity check that read_id is not less than last_read
-            if (read_id < last_read) {
-                // this is a problem with the file
-                std::cerr << "ERROR: binary input file must be sorted\n";
-                return NULL;
-            }
-
-            values.push_back(value);
-            col_ind.push_back(transcript_id);
-
-            if (read_id != last_read) {
-                // we've just transitioned to a new read, so we need to
-                // record the starting index in row_ptr;
-                row_ptr.push_back(i);
-                last_read = read_id;
+            if (verbose) {
+                std::cout << read_id << "\t" << transcript_id << "\t" << value << std::endl;
             }
         }
-        row_ptr.push_back(num_alignments);
-        aim = new AlignmentIncidenceMatrix(haplotypes, reads, transcripts, samples, col_ind, row_ptr, values);
-
     } else if (format == 1) {
         // load equivalence class, also includes counts
 
@@ -254,58 +321,40 @@ AlignmentIncidenceMatrix *loadFromBin(std::string filename, int sample_idx = -1)
         int transcript_id;
         int value;
         int num_classes = readIntFromFile(gzinfile, infile);
-
         counts.resize(num_classes);
-        //infile.read((char*)&counts[0], num_classes*sizeof(int));
+
+        std::cout << "EC: " << num_reads << std::endl;
 
         for (int j = 0; j < num_classes; j++) {
-            counts.push_back(readIntFromFile(gzinfile, infile));
+            int c = readIntFromFile(gzinfile, infile);
+            counts.push_back(c);
+
+            if (verbose) {
+                std::cout << c << std::endl;
+            }
         }
 
         num_alignments = readIntFromFile(gzinfile, infile);
 
-        values.reserve(num_alignments);
-        col_ind.reserve(num_alignments);
-
-        int last_ec = 0;
-        row_ptr.push_back(0);
+        std::cout << "Alignments: " << num_alignments << std::endl;
 
         for (int i = 0; i < num_alignments; ++i) {
             equivalence_id = readIntFromFile(gzinfile, infile);
             transcript_id = readIntFromFile(gzinfile, infile);
             value = readIntFromFile(gzinfile, infile);
 
-            // sanity check that read_id is not less than last_read
-            if (equivalence_id < last_ec) {
-                // this is a problem with the file
-                // XXX version 1 files are small enough that we could
-                // probably read this all in and then sort it, and then
-                // iterate over it and build the CRS representation.
-                std::cerr << "ERROR: binary input file must be sorted\n";
-                return NULL;
-            }
-
-            values.push_back(value);
-            col_ind.push_back(transcript_id);
-
-            if (equivalence_id != last_ec) {
-                // record the start index when we transition to a new read
-                row_ptr.push_back(i);
-                last_ec = equivalence_id;
+            if (verbose) {
+                std::cout << equivalence_id << "\t" << transcript_id << "\t" << value << std::endl;
             }
         }
-        row_ptr.push_back(num_alignments);
-        aim = new AlignmentIncidenceMatrix(haplotypes, reads, transcripts, samples,
-                                            col_ind, row_ptr, values,
-                                            counts);
     } else if (format == 2) {
         // multisample
-        std::cout << "Sample idx: " << sample_idx << std::endl;
+        // std::cout << "Sample idx: " << sample_idx << std::endl;
 
-        if (sample_idx == -1) {
-            std::cerr << "ERROR: sample index must be greater than or equal to 0\n";
-            return NULL;            
-        }
+        //if (sample_idx == -1) {
+        //    std::cerr << "ERROR: sample index must be greater than or equal to 0\n";
+        //    return NULL;
+        //}
 
         int equivalence_id;
         int transcript_id;
@@ -327,11 +376,15 @@ AlignmentIncidenceMatrix *loadFromBin(std::string filename, int sample_idx = -1)
             }
             buffer.push_back('\0');
             samples.push_back(std::string(buffer.data()));
+
+            if (verbose) {
+                std::cout << std::string(buffer.data()) << std::endl;
+            }
         }
 
         if (sample_idx > num_crs) {
             std::cerr << "ERROR: sample index must be between 0 and " << num_crs - 1 << "\n";
-            return NULL;
+            return -1;
         }
 
         // read ec
@@ -342,7 +395,7 @@ AlignmentIncidenceMatrix *loadFromBin(std::string filename, int sample_idx = -1)
         int nnz = readIntFromFile(gzinfile, infile);
         std::cout << "NNZ: " << nnz << std::endl;
 
-        //read "N" matrix 
+        //read "N" matrix
         std::vector<int> row_offsets;
         std::vector<int> columns;
         std::vector<int> data;
@@ -351,22 +404,36 @@ AlignmentIncidenceMatrix *loadFromBin(std::string filename, int sample_idx = -1)
         columns.reserve(nnz);
         data.reserve(nnz);
 
-
         //infile.read((char*)&row_offsets[0], (num_ecs + 1) * sizeof(int));
         //infile.read((char*)&columns[0], nnz * sizeof(int));
         //infile.read((char*)&data[0], nnz * sizeof(int));
 
         // TODO: better way to do this, but need to make utility function
         for (int j = 0; j < num_ecs + 1; j++) {
-            row_offsets.push_back(readIntFromFile(gzinfile, infile));
+            int r = readIntFromFile(gzinfile, infile);
+            row_offsets.push_back(r);
+
+            if (verbose) {
+                std::cout << r << std::endl;
+            }
         }
 
         for (int j = 0; j < nnz; j++) {
-            columns.push_back(readIntFromFile(gzinfile, infile));
+            int c = readIntFromFile(gzinfile, infile);
+            columns.push_back(c);
+
+            if (verbose) {
+                std::cout << c << std::endl;
+            }
         }
 
         for (int j = 0; j < nnz; j++) {
-            data.push_back(readIntFromFile(gzinfile, infile));
+            int d = readIntFromFile(gzinfile, infile);
+            data.push_back(c);
+
+            if (verbose) {
+                std::cout << d << std::endl;
+            }
         }
 
         // decipher csr to just column data
@@ -387,48 +454,41 @@ AlignmentIncidenceMatrix *loadFromBin(std::string filename, int sample_idx = -1)
             }
         }
 
-        //read "A" matrix 
-        int num_alignments = readIntFromFile(gzinfile, infile);
-        std::cout << "NUM ALIGNMENTS: " << num_alignments << std::endl;
-
-        values.reserve(num_alignments);
-        col_ind.reserve(num_alignments);
-
-        int last_ec = 0;
-        row_ptr.push_back(0);
+        //read "A" matrix
+        std::cout << "Alignments: " << num_alignments << std::endl;
 
         for (int i = 0; i < num_alignments; ++i) {
             equivalence_id = readIntFromFile(gzinfile, infile);
             transcript_id = readIntFromFile(gzinfile, infile);
             value = readIntFromFile(gzinfile, infile);
 
-            // sanity check that read_id is not less than last_read
-            if (equivalence_id < last_ec) {
-                // this is a problem with the file
-                // XXX version 1 files are small enough that we could
-                // probably read this all in and then sort it, and then
-                // iterate over it and build the CRS representation.
-                std::cerr << "ERROR: binary input file must be sorted\n";
-                return NULL;
-            }
-
-            values.push_back(value);
-            col_ind.push_back(transcript_id);
-
-            if (equivalence_id != last_ec) {
-                // record the start index when we transition to a new read
-                row_ptr.push_back(i);
-                last_ec = equivalence_id;
+            if (verbose) {
+                std::cout << equivalence_id << "\t" << transcript_id << "\t" << value << std::endl;
             }
         }
-        row_ptr.push_back(num_alignments);
-
-        std::cout << "Creating AlignmentIncidenceMatrix" << std::endl;
-        
-        aim = new AlignmentIncidenceMatrix(haplotypes, reads, transcripts, samples,
-                                            col_ind, row_ptr, values,
-                                            column_data);
     }
 
-    return aim;
+    return 0;
+}
+
+
+void print_help() {
+    std::string title = "EMASE-Zero Version " VERSION " Help";
+
+    std::cout << std::endl << std::endl
+              << title << std::endl
+              << std::string(title.length(), '-') << std::endl << std::endl
+              << "USAGE: emase-dump [options] <alignment_incidence_file>\n\n"
+              << "INPUT: Binary Alignment Incidence file prepared with alntools\n"
+              << "       (https://churchill-lab.github.io/alntools/)\n\n"
+              << "OPTIONS\n"
+              << "  --samples (-s) <string>:\n"
+              << "      Specify the sample indices.  Either one number or in the format\n"
+              << "      of <sample_start>:<sample_end>\n\n"
+              << "  --verbose (-v):\n"
+              <<"       Run in verbose mode\n\n"
+              << "  --version:\n"
+              << "      Print the version and exit\n\n"
+              << "  --help (-h):\n"
+              << "      Print this message and exit\n\n";
 }
