@@ -185,12 +185,10 @@ AlignmentIncidenceMatrix *loadFromBin(std::string filename, int sample_idx = -1)
     int total_elements_lengths = num_transcripts * num_haplotypes;
     std::vector<double> transcript_lengths(total_elements_lengths);
 
-    /*
     std::cout << "===========" << std::endl;
     std::cout << "TRANSCRIPTS" << std::endl;
     std::cout << "===========" << std::endl;
     std::cout << "#\tTRANSCRIPT\tLENGTHS" << std::endl;
-     */
 
     for (int i = 0; i < num_transcripts; ++i) {
         size = readIntFromFile(gzinfile, infile);
@@ -203,14 +201,22 @@ AlignmentIncidenceMatrix *loadFromBin(std::string filename, int sample_idx = -1)
         buffer.push_back('\0');
         transcripts[i] = std::string(buffer.data());
 
-       // std::cout << "[" << i << "]\t" << transcripts[i];
+        if (i < 10) {
+            std::cout << "[" << i << "]\t" << transcripts[i];
+        }
 
         for (int h = 0; h < num_haplotypes; ++h) {
             double length = (double)readIntFromFile(gzinfile, infile);
-            //std::cout << "\t" << length;
+            if (i < 10) {
+                std::cout << "\t" << length;
+            }
+
             transcript_lengths[(i * num_haplotypes) + h] = std::max(length, 1.0);
         }
-        //std::cout << std::endl;
+
+        if (i < 10) {
+            std::cout << std::endl;
+        }
     }
 
     if (format == 0) {
@@ -287,11 +293,12 @@ AlignmentIncidenceMatrix *loadFromBin(std::string filename, int sample_idx = -1)
         */
 
         //infile.read((char*)&counts[0], num_classes*sizeof(int));
+        std::cout << "EC\n";
         for (int j = 0; j < num_ec; j++) {
             int count = readIntFromFile(gzinfile, infile);
             counts.push_back(count);
 
-            //std::cout << "[" << j << "]\t" << counts[j] << std::endl;
+            std::cout << "[" << j << "]\t" << counts[j] << std::endl;
         }
 
         // NEW WAY
@@ -469,8 +476,8 @@ AlignmentIncidenceMatrix *loadFromBin(std::string filename, int sample_idx = -1)
         int num_rowptr = readIntFromFile(gzinfile, infile);
         int nnz = readIntFromFile(gzinfile, infile);
 
-        //std::cout << "N MATRIX ROW PTR: " << num_rowptr << std::endl;
-        //std::cout << "N MATRIX NNZ: " << nnz << std::endl;
+        std::cout << "N MATRIX ROW PTR: " << num_rowptr << std::endl;
+        std::cout << "N MATRIX NNZ: " << nnz << std::endl;
 
         std::vector<int> n_row_offsets(num_rowptr);
         std::vector<int> n_columns(nnz);
@@ -493,26 +500,65 @@ AlignmentIncidenceMatrix *loadFromBin(std::string filename, int sample_idx = -1)
             n_data[j] = readIntFromFile(gzinfile, infile);
         }
 
+
+        std::cout << "n_row_offsets" << std::endl;
+        for (int i = 0; i < 10; i++) {
+            std::cout << "[" << i << "]\t" << n_row_offsets[i] << std::endl;
+        }
+        for (int i = n_row_offsets.size() - 10; i < n_row_offsets.size(); i++) {
+            std::cout << "[" << i << "]\t" << n_row_offsets[i] << std::endl;
+        }
+
+        std::cout << "n_columns" << std::endl;
+        for (int i = 0; i < 10; i++) {
+            std::cout << "[" << i << "]\t" << n_columns[i] << std::endl;
+        }
+        for (int i = n_columns.size() - 10; i < n_columns.size(); i++) {
+            std::cout << "[" << i << "]\t" << n_columns[i] << std::endl;
+        }
+
+        std::cout << "n_data" << std::endl;
+        for (int i = 0; i < 10; i++) {
+            std::cout << "[" << i << "]\t" << n_data[i] << std::endl;
+        }
+        for (int i = n_data.size() - 10; i < n_data.size(); i++) {
+            std::cout << "[" << i << "]\t" << n_data[i] << std::endl;
+        }
+
+
         // decipher csr to just column data
         std::vector<int> column_data(num_rowptr - 1, 0);
 
-        int idx = 0;
+        std::cout << "DEBUG\n";
 
-        for (int row = 0; row < num_rowptr - 1; ++row) {
-            //std::cout << "ROW=" << row << std::endl;
-            for (int j = 0; j < n_row_offsets[row+1] - n_row_offsets[row]; ++j) {
-                //std::cout << "j=" << j << std::endl;
-                //std::cout << "idx=" << idx << std::endl;
-                if (n_columns[idx]  == sample_idx) {
-                    column_data[row] = n_data[idx];
+        int idx = 0;
+        for (int i = 0; i < num_rowptr - 1; ++i) {
+            for (int j = 0; j < n_row_offsets[i+1] - n_row_offsets[i]; ++j) {
+
+                if (n_columns[idx] == sample_idx) {
+                    column_data[i] = n_data[idx];
+                    //std::cout << column_data[i] << std::endl;
                 }
-                //std::cout << column_data[row] << std::endl;
+
                 ++idx;
             }
         }
 
-        //read "A" matrix
 
+
+        std::cout << "end DEBUG\n";
+
+        std::cout << "SIZE OF COLUMN_DATA=" << column_data.size() << std::endl;
+
+        std::cout << "column_data" << std::endl;
+        for (int i = 0; i < 20; i++) {
+            std::cout << "[" << i << "]\t" << column_data[i] << std::endl;
+        }
+        for (int i = column_data.size() - 20; i < column_data.size(); i++) {
+            std::cout << "[" << i << "]\t" << column_data[i] << std::endl;
+        }
+
+        //read "A" matrix
         num_rowptr = readIntFromFile(gzinfile, infile);
         nnz = readIntFromFile(gzinfile, infile);
 
@@ -540,6 +586,30 @@ AlignmentIncidenceMatrix *loadFromBin(std::string filename, int sample_idx = -1)
             values.push_back(readIntFromFile(gzinfile, infile));
         }
 
+
+        std::cout << "row_ptr" << std::endl;
+        for (int i = 0; i < 10; i++) {
+            std::cout << "[" << i << "]\t" << row_ptr[i] << std::endl;
+        }
+        for (int i = row_ptr.size() - 10; i < row_ptr.size(); i++) {
+            std::cout << "[" << i << "]\t" << row_ptr[i] << std::endl;
+        }
+
+        std::cout << "col_ind" << std::endl;
+        for (int i = 0; i < 10; i++) {
+            std::cout << "[" << i << "]\t" << col_ind[i] << std::endl;
+        }
+        for (int i = col_ind.size() - 10; i < col_ind.size(); i++) {
+            std::cout << "[" << i << "]\t" << col_ind[i] << std::endl;
+        }
+
+        std::cout << "values" << std::endl;
+        for (int i = 0; i < 10; i++) {
+            std::cout << "[" << i << "]\t" << values[i] << std::endl;
+        }
+        for (int i = values.size() - 10; i < values.size(); i++) {
+            std::cout << "[" << i << "]\t" << values[i] << std::endl;
+        }
 
         std::cout << "Creating AlignmentIncidenceMatrix" << std::endl;
         

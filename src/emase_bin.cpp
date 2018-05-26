@@ -252,6 +252,8 @@ int main(int argc, char **argv) {
     num_transcripts = readIntFromFile(gzinfile, infile);
     transcripts.reserve(num_transcripts);
 
+    std::cout << "Transcripts: " << num_transcripts << std::endl;
+
     int total_elements_lengths = num_transcripts * num_haplotypes;
     std::vector<double> transcript_lengths(total_elements_lengths);
 

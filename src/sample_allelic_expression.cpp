@@ -49,11 +49,11 @@ SampleAllelicExpression::SampleAllelicExpression(AlignmentIncidenceMatrix *align
     read_sum_by_gene_ = NULL;
 
     if (alignment_incidence->transcript_lengths_.size() / num_haplotypes == alignment_incidence->num_transcripts()) {
-        // we are doing lenght adjustment, mutltiply threshold by 1M
+        // we are doing length adjustment, mutltiply threshold by 1M
         threshold_ = tolerance * 1000000;
     }
     else {
-        // no lenght adjustment, multiply threshold by number of reads
+        // no length adjustment, multiply threshold by number of reads
         threshold_ = tolerance * alignment_incidence->total_reads();
     }
 
@@ -107,6 +107,7 @@ void SampleAllelicExpression::init() {
 
 void SampleAllelicExpression::init_normalize_read() {
     std::fill(current_, current_ + size(), 0.0);
+
 
     int working_size;
     int start_index;
@@ -729,6 +730,8 @@ void SampleAllelicExpression::saveStackSums(std::string filename, std::string sa
 void SampleAllelicExpression::applyTranscriptLength() {
     double sum = 0.0;
 
+    //std::cout << "start applyTranscriptLength\n";
+
     if (alignment_incidence_->transcript_lengths_.size() == 0) {
         // didn't load transcript lengths, don't do anything
         return;
@@ -746,6 +749,10 @@ void SampleAllelicExpression::applyTranscriptLength() {
     for (int i = 0; i < num_transcripts; i++) {
         for (int j = 0; j < num_haplotypes; j++) {
             current_[i * num_haplotypes + j] *= 1000000.0 / sum;
+            //std::cout << current_[i * num_haplotypes + j] << std::endl;
         }
     }
+
+    //std::cout << "done applyTranscriptLength\n";
+
 }
