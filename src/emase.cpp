@@ -44,7 +44,7 @@ int main(int argc, char **argv) {
     int max_iterations = 999;
     int num_iterations;
     int sample_start = 0;
-    int sample_end = 1;
+    int sample_end = 0;
     int verbose = 0;
 
     double tolerance = 0.0001;
@@ -55,7 +55,6 @@ int main(int argc, char **argv) {
     std::string output_filename;
     std::string output_filename_counts;
     std::string samples_str;
-    std::string transcript_length_file;
 
     bool bad_args = false;
 
@@ -63,7 +62,6 @@ int main(int argc, char **argv) {
         {"help", no_argument, 0, 'h'},
         {"model", required_argument, 0, 'm'},
         {"outbase", required_argument, 0, 'o'},
-        {"transcript-lengths", required_argument, 0, 'l'},
         {"max-iterations", required_argument, 0, 'i'},
         {"gene-mappings", required_argument, 0, 'g'},
         {"samples", required_argument, 0, 's'},
@@ -76,7 +74,7 @@ int main(int argc, char **argv) {
     int c;
     int option_index = 0;
 
-    while ((c = getopt_long(argc, argv, "hm:o:l:i:g:s:vVc:t:", long_options,
+    while ((c = getopt_long(argc, argv, "hm:o:i:g:s:vVc:t:", long_options,
                             &option_index)) != -1) {
         switch (c) {
             case 'h':
@@ -111,10 +109,6 @@ int main(int argc, char **argv) {
                 output_filename_counts = std::string(optarg);
                 output_filename.append(".tpm");
                 output_filename_counts.append(".counts");
-                break;
-
-            case 'l':
-                transcript_length_file = std::string(optarg);
                 break;
 
             case 'i':
@@ -174,13 +168,6 @@ int main(int argc, char **argv) {
         std::cout << "Grouping File: None\n";
     }
 
-    if (!transcript_length_file.empty()) {
-        std::cout << "Transcript Length File: " << transcript_length_file
-                  << std::endl;
-    } else {
-        std::cout << "Transcript Length File: None\n";
-    }
-
     int gzipped = isGZipped(input_filename);
     int format = getBinFormat(input_filename);
 
@@ -237,7 +224,7 @@ int main(int argc, char **argv) {
         if (verbose) {
             std::cout << "File had the following haplotype names:\n";
             for (auto it = hap_names.begin(); it != hap_names.end(); ++it) {
-                std::cout << *it << "\t";
+                std::cout << "[" << *it << "]" << std::endl;
             }
             std::cout << std::endl;
 
@@ -254,14 +241,6 @@ int main(int argc, char **argv) {
             std::cout << std::endl;
         }
 
-        if (!transcript_length_file.empty()) {
-            if (verbose) {
-                std::cout << "Loading Transcript Length File "
-                          << transcript_length_file << std::endl;
-            }
-            aim->loadTranscriptLengths(transcript_length_file);
-        }
-
         if (!gene_file.empty()) {
             if (verbose) {
                 std::cout << "Loading Gene Mapping File " << gene_file << std::endl;
@@ -275,7 +254,9 @@ int main(int argc, char **argv) {
         }
 
         t1 = clock();
+        std::cout<<"SampleAllelicExpression"<<std::endl;
         SampleAllelicExpression sae(aim, tolerance);
+        std::cout<<"SampleAllelicExpression done"<<std::endl;
         t2 = clock();
 
         if (verbose) {
@@ -363,9 +344,6 @@ void print_help() {
               << "      Specify normalization model (can be 1-4, default=1)\n\n"
               << "  --output (-o) <filename>:\n"
               << "      Specify filename for output file (default is input_basename.stacksum.tsv)\n\n"
-              << "  --transcript-lengths (-l) <filename>:\n"
-              << "      Filename for transcript length file. Format of each line is\n"
-              << "     \"TranscriptName_HaplotypeName\\tlength\"\n\n"
               << "  --gene-mappings (-g) <filename>:\n"
               << "      Filename containing transcript to gene mapping. Tab delimited file where\n"
               << "      the first field is the gene ID, all other fields are the transcript IDs\n"

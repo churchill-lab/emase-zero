@@ -609,6 +609,7 @@ void SampleAllelicExpression::updateModel4() {
     // clear current_ so we can use it to accumulate sums
     std::fill(current_, current_ + size(), 0.0);
 
+
     int start_index;
     int work_index;
     double read_sum;
@@ -639,6 +640,7 @@ void SampleAllelicExpression::updateModel4() {
         for (long j = alignment_incidence_->row_ptr[i]; j < alignment_incidence_->row_ptr[i+1]; ++j) {
             start_index = alignment_incidence_->col_ind[j] * num_haplotypes;
             for (int k = 0; k < num_haplotypes; ++k) {
+
                 current_[start_index + k] += (working_[work_index++] / read_sum)  * (double)alignment_incidence_->counts[i];
             }
         }
@@ -734,7 +736,9 @@ void SampleAllelicExpression::applyTranscriptLength() {
 
     for (int i = 0; i < num_transcripts; i++) {
         for (int j = 0; j < num_haplotypes;  j++) {
+
             current_[i * num_haplotypes + j] /= alignment_incidence_->transcript_lengths_[i * num_haplotypes + j];
+
             sum += current_[i * num_haplotypes + j];
         }
     }

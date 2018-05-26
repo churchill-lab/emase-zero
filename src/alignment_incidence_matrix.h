@@ -49,7 +49,8 @@ public:
                              std::vector<int> col_ind,
                              std::vector<int> row_ptr,
                              std::vector<int> val,
-                             std::vector<int> counts);
+                             std::vector<int> counts,
+                             std::vector<double> transcript_lengths);
 
     inline std::vector<std::string>::size_type num_haplotypes() {
         return haplotype_names.size();
@@ -101,7 +102,7 @@ public:
         return has_equivalence_classes_;
     }
 
-    void loadTranscriptLengths(std::string filename);
+    //void loadTranscriptLengths(std::string filename);
 
 private:
 

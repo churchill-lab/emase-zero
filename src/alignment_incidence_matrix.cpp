@@ -55,7 +55,8 @@ AlignmentIncidenceMatrix::AlignmentIncidenceMatrix(std::vector<std::string> hapl
                                                    std::vector<int> col_ind,
                                                    std::vector<int> row_ptr,
                                                    std::vector<int> val,
-                                                   std::vector<int> counts) :
+                                                   std::vector<int> counts,
+                                                   std::vector<double> transcript_lengths) :
     haplotype_names(haplotypes),
     transcript_names(transcripts),
     read_names(reads),
@@ -63,7 +64,8 @@ AlignmentIncidenceMatrix::AlignmentIncidenceMatrix(std::vector<std::string> hapl
     col_ind(col_ind),
     row_ptr(row_ptr),
     val(val),
-    counts(counts)
+    counts(counts),
+    transcript_lengths_(transcript_lengths)
 {
     has_gene_mappings_ = false;
     has_equivalence_classes_ = true;
@@ -72,6 +74,11 @@ AlignmentIncidenceMatrix::AlignmentIncidenceMatrix(std::vector<std::string> hapl
     for (auto it = counts.begin(); it != counts.end(); ++it) {
         total_reads_ += *it;
     }
+/*
+    for (int i = 0; i < transcript_lengths_.size(); i++) {
+        std::cout << i << "---" << transcript_lengths_[i] << std::endl;
+    }
+*/
 }
 
 
@@ -188,6 +195,7 @@ bool AlignmentIncidenceMatrix::loadGeneMappings(std::string filename) {
     return true;
 }
 
+/*
 void AlignmentIncidenceMatrix::loadTranscriptLengths(std::string filename) {
     std::ifstream input(filename);
 
@@ -275,3 +283,4 @@ void AlignmentIncidenceMatrix::loadTranscriptLengths(std::string filename) {
         exit(1);
     }
 }
+*/
