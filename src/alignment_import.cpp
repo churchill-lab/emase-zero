@@ -301,20 +301,6 @@ AlignmentIncidenceMatrix *loadFromBin(std::string filename) {
                                            col_ind, row_ptr, values);
 
     } else if (format == 1) {
-        int num_ec = readIntFromFile(gzinfile, infile);
-        counts.reserve(num_ec);
-
-
-        //infile.read((char*)&counts[0], num_classes*sizeof(int));
-        std::cout << "EC\n";
-        for (int j = 0; j < num_ec; j++) {
-            int count = readIntFromFile(gzinfile, infile);
-            counts.push_back(count);
-
-            std::cout << "[" << j << "]\t" << counts[j] << std::endl;
-        }
-
-
         //
         // read "A" matrix (CSR format)
         //
@@ -361,6 +347,20 @@ AlignmentIncidenceMatrix *loadFromBin(std::string filename) {
             }
         }
         */
+
+        int num_ec = readIntFromFile(gzinfile, infile);
+        counts.reserve(num_ec);
+
+
+        //infile.read((char*)&counts[0], num_classes*sizeof(int));
+        std::cout << "EC\n";
+        for (int j = 0; j < num_ec; j++) {
+            int count = readIntFromFile(gzinfile, infile);
+            counts.push_back(count);
+
+            std::cout << "[" << j << "]\t" << counts[j] << std::endl;
+        }
+
 
         std::cout << "Creating AlignmentIncidenceMatrix" << std::endl;
 
