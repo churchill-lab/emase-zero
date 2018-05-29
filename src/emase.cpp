@@ -203,54 +203,62 @@ int main(int argc, char **argv) {
               << "Output File (Counts): " << output_filename_counts << std::endl
               << "----------------------------------------------------\n\n\n";
 
-    // Loop through all the samples specified
-    for (int i = sample_start; i < sample_end + 1; ++i) {
-        if (format == 2) {
-            std::cout << "Loading " << input_filename << ", Sample " << i << std::endl;
-            aim = loadFromBin(input_filename, i);
-        } else {
-            std::cout << "Loading " << input_filename << "..." << std::endl;
-            aim = loadFromBin(input_filename);
+    std::cout << "Loading " << input_filename << "..." << std::endl;
+    aim = loadFromBin(input_filename);
+
+    if (!aim) {
+        std::cerr << "Error loading binary input file\n";
+        return 1;
+    }
+
+    std::vector<std::string> hap_names = aim->get_haplotype_names();
+    std::vector<std::string> sample_names = aim->get_sample_names();
+
+    if (verbose) {
+        std::cout << "File had the following haplotype names:\n";
+        for (auto it = hap_names.begin(); it != hap_names.end(); ++it) {
+            std::cout << "[" << *it << "]" << std::endl;
         }
-        
-        if (!aim) {		
-            std::cerr << "Error loading binary input file\n";		
-            return 1;		
-        }		
-                
-        std::vector<std::string> hap_names = aim->get_haplotype_names();
-        std::vector<std::string> sample_names = aim->get_sample_names();
+        std::cout << std::endl;
 
-        if (verbose) {
-            std::cout << "File had the following haplotype names:\n";
-            for (auto it = hap_names.begin(); it != hap_names.end(); ++it) {
-                std::cout << "[" << *it << "]" << std::endl;
-            }
-            std::cout << std::endl;
-
+        if (format != 2) {
             if (aim->has_equivalence_classes()) {
                 std::cout << aim->num_alignment_classes()
                           << " alignment classes loaded ("
                           << aim->total_reads() << " total reads)\n";
             }
-            else {
-                std::cout << aim->total_reads() << " reads loaded\n";
-            }
-            std::cout << aim->num_transcripts() << " transcripts\n";
+        }
+        std::cout << aim->num_transcripts() << " transcripts\n";
 
-            std::cout << std::endl;
+        std::cout << std::endl;
+    }
+
+    if (!gene_file.empty()) {
+        if (verbose) {
+            std::cout << "Loading Gene Mapping File " << gene_file << std::endl;
+        }
+        aim->loadGeneMappings(gene_file);
+    }
+
+    if (model != SampleAllelicExpression::MODEL_4 && !aim->has_gene_mappings()) {
+        std::cerr << "[ERROR] File does not contain transcript to gene mapping information.  Only normalization Model 4 can be used.\n";
+        return 1;
+    }
+
+    // Loop through all the samples specified
+    for (int i = sample_start; i < sample_end + 1; ++i) {
+        std::cout << "SAMPLE = " << i << std::endl;
+
+        if (i != sample_start) {
+            //std::vector<int> hap_names = aim->get_haplotype_names();
         }
 
-        if (!gene_file.empty()) {
-            if (verbose) {
-                std::cout << "Loading Gene Mapping File " << gene_file << std::endl;
-            }
-            aim->loadGeneMappings(gene_file);
+        if (format == 2) {
+            loadNFromBin(input_filename, *aim, i);
         }
 
-        if (model != SampleAllelicExpression::MODEL_4 && !aim->has_gene_mappings()) {
-            std::cerr << "[ERROR] File does not contain transcript to gene mapping information.  Only normalization Model 4 can be used.\n";
-            return 1;
+        if (verbose) {
+            std::cout << aim->total_reads() << " reads loaded\n";
         }
 
         t1 = clock();
@@ -258,6 +266,11 @@ int main(int argc, char **argv) {
         SampleAllelicExpression sae(aim, tolerance);
         std::cout<<"SampleAllelicExpression done"<<std::endl;
         t2 = clock();
+
+
+
+
+
 
         if (verbose) {
             diff = ((float)t2-(float)t1)/CLOCKS_PER_SEC;

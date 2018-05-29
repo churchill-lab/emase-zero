@@ -22,7 +22,8 @@
 #define ALIGNMENT_IMPORT_H
 
 
-AlignmentIncidenceMatrix *loadFromBin(std::string filename, int sample_id = -1);
+AlignmentIncidenceMatrix *loadFromBin(std::string filename);
+void loadNFromBin(std::string filename, AlignmentIncidenceMatrix &aim, int sample_idx);
 bool isGZipped(std::string filename);
 int getBinFormat(std::string filename);
 

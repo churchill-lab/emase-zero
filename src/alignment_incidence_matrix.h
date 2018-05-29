@@ -35,21 +35,28 @@ class AlignmentIncidenceMatrix {
 
 public:
     AlignmentIncidenceMatrix(std::vector<std::string> haplotypes,
-                             std::vector<std::string> reads,
                              std::vector<std::string> transcripts,
-                             std::vector<std::string> samples,
+                             std::vector<std::string> reads,
                              std::vector<int> col_ind,
                              std::vector<int> row_ptr,
                              std::vector<int> val);
 
     AlignmentIncidenceMatrix(std::vector<std::string> haplotypes,
-                             std::vector<std::string> reads,
                              std::vector<std::string> transcripts,
-                             std::vector<std::string> samples,
+                             std::vector<std::string> reads,
                              std::vector<int> col_ind,
                              std::vector<int> row_ptr,
                              std::vector<int> val,
                              std::vector<int> counts,
+                             std::vector<double> transcript_lengths);
+
+    AlignmentIncidenceMatrix(std::vector<std::string> haplotypes,
+                             std::vector<std::string> transcripts,
+                             std::vector<std::string> reads,
+                             std::vector<std::string> samples,
+                             std::vector<int> col_ind,
+                             std::vector<int> row_ptr,
+                             std::vector<int> val,
                              std::vector<double> transcript_lengths);
 
     inline std::vector<std::string>::size_type num_haplotypes() {
@@ -102,7 +109,22 @@ public:
         return has_equivalence_classes_;
     }
 
-    //void loadTranscriptLengths(std::string filename);
+    void setCounts(std::vector<int> counts_);
+
+    std::vector<int> getCounts() {
+        return counts;
+    }
+
+    void setSampleFilter(int sample_idx_, std::vector<int> rows);
+
+    inline void setNTell(long tell) {
+        n_tell = tell;
+    }
+
+    inline long getNTell() {
+        return n_tell;
+    }
+
 
 private:
 
@@ -113,25 +135,30 @@ private:
     std::vector<std::string> transcript_names;
     std::vector<std::string> read_names;
     std::vector<std::string> sample_names;
-
     std::vector<std::string> gene_names;
-    std::vector<int> tx_to_gene;
 
+    std::vector<int> tx_to_gene;
+    std::vector<int> col_ind_orig;
+    std::vector<int> row_ptr_orig;
+    std::vector<int> val_orig;
     std::vector<int> col_ind;
     std::vector<int> row_ptr;
     std::vector<int> val;
-
     std::vector<int> gene_mapping;
-
     std::vector<int> counts;
+    std::vector<int> row_filters;
 
     std::vector<double> transcript_lengths_;
 
     bool has_gene_mappings_;
-
     bool has_equivalence_classes_;
 
     long total_reads_;
+
+    long n_tell;
+    int sample_index;
+
+
 
     DISALLOW_COPY_AND_ASSIGN(AlignmentIncidenceMatrix);
 };

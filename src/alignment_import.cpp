@@ -104,6 +104,26 @@ char readCharFromFile(gzFile gzinfile, std::ifstream &infile) {
 }
 
 
+void fileSeek(gzFile gzinfile, std::ifstream &infile, long pos) {
+    if (infile.is_open()) {
+        infile.seekg(pos);
+    } else {
+        gzrewind(gzinfile);
+        gzseek(gzinfile, pos, SEEK_CUR);
+    }
+}
+
+long fileTell(gzFile gzinfile, std::ifstream &infile) {
+    if (infile.is_open()) {
+        return (long)infile.tellg();
+    } else {
+        return (long)gztell(gzinfile);
+    }
+}
+
+
+
+
 /* This function will read in a binary file produced by Matt Vincent's
    Kallisto exporter (https://github.com/churchill-lab/kallisto-export) and
    create an AlignmentIncidenceMatrix instance.  A pointer to the new aim
@@ -112,7 +132,7 @@ char readCharFromFile(gzFile gzinfile, std::ifstream &infile) {
 
    This code assumes that the reads/equivalence classes are stored in order.
  */
-AlignmentIncidenceMatrix *loadFromBin(std::string filename, int sample_idx = -1) {
+AlignmentIncidenceMatrix *loadFromBin(std::string filename) {
     AlignmentIncidenceMatrix *aim = NULL;
 
     // the following vectors will hold the data we read in from the file,
@@ -277,20 +297,13 @@ AlignmentIncidenceMatrix *loadFromBin(std::string filename, int sample_idx = -1)
 
         std::cout << "Creating AlignmentIncidenceMatrix" << std::endl;
 
-        aim = new AlignmentIncidenceMatrix(haplotypes, reads, transcripts, samples,
-                                           col_ind, row_ptr, values, counts,
-                                           transcript_lengths);
+        aim = new AlignmentIncidenceMatrix(haplotypes, transcripts, reads,
+                                           col_ind, row_ptr, values);
 
     } else if (format == 1) {
         int num_ec = readIntFromFile(gzinfile, infile);
         counts.reserve(num_ec);
 
-        /*
-        std::cout << "==" << std::endl;
-        std::cout << "EC" << std::endl;
-        std::cout << "==" << std::endl;
-        std::cout << "#\tEC" << std::endl;
-        */
 
         //infile.read((char*)&counts[0], num_classes*sizeof(int));
         std::cout << "EC\n";
@@ -301,10 +314,10 @@ AlignmentIncidenceMatrix *loadFromBin(std::string filename, int sample_idx = -1)
             std::cout << "[" << j << "]\t" << counts[j] << std::endl;
         }
 
-        // NEW WAY
 
-
-        //read "A" matrix
+        //
+        // read "A" matrix (CSR format)
+        //
         int num_rowptr = readIntFromFile(gzinfile, infile);
         int nnz = readIntFromFile(gzinfile, infile);
 
@@ -324,98 +337,15 @@ AlignmentIncidenceMatrix *loadFromBin(std::string filename, int sample_idx = -1)
             row_ptr.push_back(readIntFromFile(gzinfile, infile));
         }
 
-
         for (int j = 0; j < nnz; j++) {
             col_ind.push_back(readIntFromFile(gzinfile, infile));
         }
-
 
         for (int j = 0; j < nnz; j++) {
             values.push_back(readIntFromFile(gzinfile, infile));
         }
 
         /*
-
-        // OLD WAY
-        int read_id;
-        int transcript_id;
-        int value;
-        int num_alignments = readIntFromFile(gzinfile, infile);
-        values.reserve(num_alignments);
-        col_ind.reserve(num_alignments);
-
-        // first read values start at index 0
-        row_ptr.push_back(0);
-        int last_read = 0;
-
-        for (int i = 0; i < num_alignments; ++i) {
-            read_id = readIntFromFile(gzinfile, infile);
-            transcript_id = readIntFromFile(gzinfile, infile);
-            value = readIntFromFile(gzinfile, infile);
-
-            // sanity check that read_id is not less than last_read
-            if (read_id < last_read) {
-                // this is a problem with the file
-                std::cerr << "ERROR: binary input file must be sorted\n";
-                return NULL;
-            }
-
-            values.push_back(value);
-            col_ind.push_back(transcript_id);
-
-            if (read_id != last_read) {
-                // we've just transitioned to a new read, so we need to
-                // record the starting index in row_ptr;
-                row_ptr.push_back(i);
-                last_read = read_id;
-            }
-        }
-        row_ptr.push_back(num_alignments);
-         */
-
-/*
-//////////////
-        std::cout << "===============" << std::endl;
-        std::cout << "row_ptr.size()=" << row_ptr.size() << std::endl;;
-        std::cout << "===============" << std::endl;
-        std::cout << "#\tVALUE\tEC" << std::endl;;
-        for (int i = 0; i < row_ptr.size(); i++) {
-            std::cout << "[" << i << "]\t" << row_ptr[i] << "\t" << counts[row_ptr[i]] << std::endl;
-        }
-//////////////
-
-
-//////////////
-        std::cout << "===============" << std::endl;
-        std::cout << "col_ind.size()=" << col_ind.size() << std::endl;;
-        std::cout << "===============" << std::endl;
-        std::cout << "#\tVALUE\tTRANSCRIPT" << std::endl;;
-        for (int i = 0; i < col_ind.size(); i++) {
-            std::cout << "[" << i << "]\t" << col_ind[i] << "\t" << transcripts[col_ind[i]] << std::endl;
-        }
-//////////////
-
-//////////////
-        std::cout << "===============" << std::endl;
-        std::cout << "values.size()=" << values.size() << std::endl;;
-        std::cout << "===============" << std::endl;
-        std::cout << "#\tVALUE" << std::endl;;
-        for (int i = 0; i < values.size(); i++) {
-            std::cout << "[" << i << "]\t" << values[i] << std::endl;
-        }
-//////////////
-*/
-
-/*
- * for i in xrange(len(indptr) - 1):
-    for j in xrange(indptr[i+1] - indptr[i]):
-        if data[idx] != 0:
-            print ec[i], targets[indices[idx]], data[idx]
-        idx += 1
-
- */
-        /*
-
         std::cout << "=============" << std::endl;
         std::cout << "HUMAN READOUT" << values.size() << std::endl;;
         std::cout << "=============" << std::endl;
@@ -430,25 +360,18 @@ AlignmentIncidenceMatrix *loadFromBin(std::string filename, int sample_idx = -1)
                 ++idx;
             }
         }
-         */
-
+        */
 
         std::cout << "Creating AlignmentIncidenceMatrix" << std::endl;
 
-        aim = new AlignmentIncidenceMatrix(haplotypes, reads, transcripts, samples,
-                                           col_ind, row_ptr, values, counts,
-                                           transcript_lengths);
+        aim = new AlignmentIncidenceMatrix(haplotypes, transcripts, reads,
+                                           col_ind, row_ptr, values,
+                                           counts, transcript_lengths);
 
     } else if (format == 2) {
-        // multisample
-        std::cout << "Sample idx: " << sample_idx << std::endl;
-
-        if (sample_idx == -1) {
-            std::cerr << "ERROR: sample index must be greater than or equal to 0\n";
-            return NULL;            
-        }
-
-        // read crs
+        //
+        // read samples (crs)
+        //
         int num_crs = readIntFromFile(gzinfile, infile);
         samples.reserve(num_crs);
 
@@ -466,101 +389,11 @@ AlignmentIncidenceMatrix *loadFromBin(std::string filename, int sample_idx = -1)
             samples.push_back(std::string(buffer.data()));
         }
 
-        if (sample_idx > num_crs) {
-            std::cerr << "ERROR: sample index must be between 0 and " << num_crs - 1 << "\n";
-            return NULL;
-        }
-
-        //read "N" matrix
-
+        //
+        // read "A" matrix (CSR matrix)
+        //
         int num_rowptr = readIntFromFile(gzinfile, infile);
         int nnz = readIntFromFile(gzinfile, infile);
-
-        std::cout << "N MATRIX ROW PTR: " << num_rowptr << std::endl;
-        std::cout << "N MATRIX NNZ: " << nnz << std::endl;
-
-        std::vector<int> n_row_offsets(num_rowptr);
-        std::vector<int> n_columns(nnz);
-        std::vector<int> n_data(nnz);
-
-        //infile.read((char*)&row_offsets[0], (num_ecs + 1) * sizeof(int));
-        //infile.read((char*)&columns[0], nnz * sizeof(int));
-        //infile.read((char*)&data[0], nnz * sizeof(int));
-
-        // TODO: better way to do this, but need to make utility function
-        for (int j = 0; j < num_rowptr; j++) {
-            n_row_offsets[j] = readIntFromFile(gzinfile, infile);
-        }
-
-        for (int j = 0; j < nnz; j++) {
-            n_columns[j] = readIntFromFile(gzinfile, infile);
-        }
-
-        for (int j = 0; j < nnz; j++) {
-            n_data[j] = readIntFromFile(gzinfile, infile);
-        }
-
-
-        std::cout << "n_row_offsets" << std::endl;
-        for (int i = 0; i < 10; i++) {
-            std::cout << "[" << i << "]\t" << n_row_offsets[i] << std::endl;
-        }
-        for (int i = n_row_offsets.size() - 10; i < n_row_offsets.size(); i++) {
-            std::cout << "[" << i << "]\t" << n_row_offsets[i] << std::endl;
-        }
-
-        std::cout << "n_columns" << std::endl;
-        for (int i = 0; i < 10; i++) {
-            std::cout << "[" << i << "]\t" << n_columns[i] << std::endl;
-        }
-        for (int i = n_columns.size() - 10; i < n_columns.size(); i++) {
-            std::cout << "[" << i << "]\t" << n_columns[i] << std::endl;
-        }
-
-        std::cout << "n_data" << std::endl;
-        for (int i = 0; i < 10; i++) {
-            std::cout << "[" << i << "]\t" << n_data[i] << std::endl;
-        }
-        for (int i = n_data.size() - 10; i < n_data.size(); i++) {
-            std::cout << "[" << i << "]\t" << n_data[i] << std::endl;
-        }
-
-
-        // decipher csr to just column data
-        std::vector<int> column_data(num_rowptr - 1, 0);
-
-        std::cout << "DEBUG\n";
-
-        int idx = 0;
-        for (int i = 0; i < num_rowptr - 1; ++i) {
-            for (int j = 0; j < n_row_offsets[i+1] - n_row_offsets[i]; ++j) {
-
-                if (n_columns[idx] == sample_idx) {
-                    column_data[i] = n_data[idx];
-                    //std::cout << column_data[i] << std::endl;
-                }
-
-                ++idx;
-            }
-        }
-
-
-
-        std::cout << "end DEBUG\n";
-
-        std::cout << "SIZE OF COLUMN_DATA=" << column_data.size() << std::endl;
-
-        std::cout << "column_data" << std::endl;
-        for (int i = 0; i < 20; i++) {
-            std::cout << "[" << i << "]\t" << column_data[i] << std::endl;
-        }
-        for (int i = column_data.size() - 20; i < column_data.size(); i++) {
-            std::cout << "[" << i << "]\t" << column_data[i] << std::endl;
-        }
-
-        //read "A" matrix
-        num_rowptr = readIntFromFile(gzinfile, infile);
-        nnz = readIntFromFile(gzinfile, infile);
 
         std::cout << "A MATRIX ROW PTR: " << num_rowptr << std::endl;
         std::cout << "A MATRIX NNZ: " << nnz << std::endl;
@@ -586,7 +419,7 @@ AlignmentIncidenceMatrix *loadFromBin(std::string filename, int sample_idx = -1)
             values.push_back(readIntFromFile(gzinfile, infile));
         }
 
-
+        /*
         std::cout << "row_ptr" << std::endl;
         for (int i = 0; i < 10; i++) {
             std::cout << "[" << i << "]\t" << row_ptr[i] << std::endl;
@@ -610,13 +443,144 @@ AlignmentIncidenceMatrix *loadFromBin(std::string filename, int sample_idx = -1)
         for (int i = values.size() - 10; i < values.size(); i++) {
             std::cout << "[" << i << "]\t" << values[i] << std::endl;
         }
+        */
+
 
         std::cout << "Creating AlignmentIncidenceMatrix" << std::endl;
-        
-        aim = new AlignmentIncidenceMatrix(haplotypes, reads, transcripts, samples,
-                                           col_ind, row_ptr, values, column_data,
+
+        aim = new AlignmentIncidenceMatrix(haplotypes, transcripts, reads, samples,
+                                           col_ind, row_ptr, values,
                                            transcript_lengths);
+
+        aim->setNTell(fileTell(gzinfile, infile));
     }
 
     return aim;
+}
+
+
+void loadNFromBin(std::string filename, AlignmentIncidenceMatrix &aim, int sample_idx) {
+    bool gzipped = isGZipped(filename);
+    int format = getBinFormat(filename);
+
+    std::ifstream infile;
+    gzFile gzinfile;
+
+    if (gzipped) {
+        gzinfile = (gzFile) gzopen(filename.c_str(), "rb");
+    } else {
+        infile.open(filename, std::ios::binary);
+    }
+
+
+    if (format == 0) {
+        std::cout << "N matrix is not in Format 0" << std::endl;
+    } else if (format == 1) {
+        std::cout << "N matrix is not in Format 0" << std::endl;
+    } else if (format == 2) {
+        //
+        // read "N" matrix (csc format)
+        //
+
+        long n_tell = aim.getNTell();
+        //std::cout << "n_tell = " << n_tell << std::endl;
+
+        /**
+         * To load only the information we need from the CSC matrix.
+         */
+        // seek to start of N matrix
+        fileSeek(gzinfile, infile, n_tell);
+
+        int num_indptr_csc = readIntFromFile(gzinfile, infile);
+        int nnz_csc = readIntFromFile(gzinfile, infile);
+
+        std::cout << "N MATRIX ROW PTR: " << num_indptr_csc << std::endl;
+        std::cout << "N MATRIX NNZ: " << nnz_csc << std::endl;
+
+        n_tell = fileTell(gzinfile, infile);
+
+        /**
+         * Determine the position in the file where we need to be
+         * with regards to the indptr.
+         *
+         * n_tell + (sample_idx * sizeof(int))
+         */
+
+        int seek_pos = n_tell + (sample_idx * sizeof(int));
+        //std::cout << "seek_pos=" << seek_pos << std::endl;
+        fileSeek(gzinfile, infile, seek_pos);
+
+        /**
+         * Read indptr[sample_idx] and indptr[sample_idx + 1]
+         */
+        int idx_1 = readIntFromFile(gzinfile, infile);
+        int idx_2 = readIntFromFile(gzinfile, infile);
+        //std::cout << "idx_1:idx_2=" << idx_1 << ":" << idx_2 << std::endl;
+
+        /**
+         * Find the start on indices.
+         *
+         * n_tell + (len(indptr) * sizeof(int))
+         */
+        seek_pos = n_tell + (sizeof(int) * num_indptr_csc);
+
+        /**
+         * Determine the position in the file where we need to be based
+         * upon:
+         *     idx_1 = indptr[sample_idx]
+         *     idx_2 = indptr[sample_idx + 1]
+         *
+         * n_tell + (idx_1 * sizeof(int))
+         */
+        seek_pos += (sizeof(int) * idx_1);
+        //std::cout << "indices_pos ..." << seek_pos << std::endl;
+        fileSeek(gzinfile, infile, seek_pos);
+
+        /**
+         * The values of indices[idx_1] through indices[idx_2] are
+         * the row numbers that contain data in the CSC matrix.
+         */
+        std::vector<int> row_values(idx_2 - idx_1);
+        //std::cout << "row_values.size()=" << row_values.size() << std::endl;
+        for (int x = 0; x < (idx_2 - idx_1); x++) {
+            int row = readIntFromFile(gzinfile, infile);
+            row_values[x] = row;
+            //std::cout << "x = " << x << ", row = " << row << std::endl;
+        }
+
+        /**
+         * Find the start on data.
+         *
+         * n_tell + (len(indptr) * sizeof(int)) + (len(nnz) * sizeof(int))
+         */
+        seek_pos = n_tell + sizeof(int) * num_indptr_csc + sizeof(int) * nnz_csc;
+
+        /**
+         * Determine the position in the file where we need to be based
+         * upon:
+         *     idx_1 = indptr[sample_idx]
+         *     idx_2 = indptr[sample_idx + 1]
+         *
+         * seek_pos + (idx_1 * sizeof(int))
+         */
+        seek_pos += (sizeof(int) * idx_1);
+        //std::cout << "data_pos ..." << seek_pos << std::endl;
+        fileSeek(gzinfile, infile, seek_pos);
+
+        /**
+         * The values of data[idx_1] through data[idx_2] are
+         * the actual values in the CSC matrix.
+         */
+        std::vector<int> data(idx_2 - idx_1);
+        //std::cout << "data.size()=" << data.size() << std::endl;
+        for (int x = 0; x < (idx_2 - idx_1); x++) {
+            int value = readIntFromFile(gzinfile, infile);
+            data[x] = value;
+            //std::cout << "x = " << x << ", value = " << value << std::endl;
+        }
+
+        aim.setSampleFilter(sample_idx, row_values);
+        aim.setCounts(data);
+    }
+
 }

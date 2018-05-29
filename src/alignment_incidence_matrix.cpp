@@ -28,20 +28,19 @@
 #include "alignment_incidence_matrix.h"
 
 AlignmentIncidenceMatrix::AlignmentIncidenceMatrix(std::vector<std::string> haplotypes,
-                                                   std::vector<std::string> reads,
                                                    std::vector<std::string> transcripts,
-                                                   std::vector<std::string> samples,
+                                                   std::vector<std::string> reads,
                                                    std::vector<int> col_ind,
                                                    std::vector<int> row_ptr,
                                                    std::vector<int> val) :
     haplotype_names(haplotypes),
     transcript_names(transcripts),
     read_names(reads),
-    sample_names(samples),
     col_ind(col_ind),
     row_ptr(row_ptr),
     val(val)
 {
+    sample_index = 0;
     has_gene_mappings_ = false;
     has_equivalence_classes_ = false;
     total_reads_ = row_ptr.size() - 1;
@@ -49,9 +48,8 @@ AlignmentIncidenceMatrix::AlignmentIncidenceMatrix(std::vector<std::string> hapl
 }
 
 AlignmentIncidenceMatrix::AlignmentIncidenceMatrix(std::vector<std::string> haplotypes,
-                                                   std::vector<std::string> reads,
                                                    std::vector<std::string> transcripts,
-                                                   std::vector<std::string> samples,
+                                                   std::vector<std::string> reads,
                                                    std::vector<int> col_ind,
                                                    std::vector<int> row_ptr,
                                                    std::vector<int> val,
@@ -60,7 +58,6 @@ AlignmentIncidenceMatrix::AlignmentIncidenceMatrix(std::vector<std::string> hapl
     haplotype_names(haplotypes),
     transcript_names(transcripts),
     read_names(reads),
-    sample_names(samples),
     col_ind(col_ind),
     row_ptr(row_ptr),
     val(val),
@@ -70,15 +67,53 @@ AlignmentIncidenceMatrix::AlignmentIncidenceMatrix(std::vector<std::string> hapl
     has_gene_mappings_ = false;
     has_equivalence_classes_ = true;
     total_reads_ = 0;
+    sample_index = 0;
 
     for (auto it = counts.begin(); it != counts.end(); ++it) {
         total_reads_ += *it;
     }
-/*
-    for (int i = 0; i < transcript_lengths_.size(); i++) {
-        std::cout << i << "---" << transcript_lengths_[i] << std::endl;
+}
+
+AlignmentIncidenceMatrix::AlignmentIncidenceMatrix(std::vector<std::string> haplotypes,
+                                                   std::vector<std::string> transcripts,
+                                                   std::vector<std::string> reads,
+                                                   std::vector<std::string> samples,
+                                                   std::vector<int> col_ind,
+                                                   std::vector<int> row_ptr,
+                                                   std::vector<int> val,
+                                                   std::vector<double> transcript_lengths) :
+        haplotype_names(haplotypes),
+        transcript_names(transcripts),
+        read_names(reads),
+        sample_names(samples),
+        col_ind_orig(col_ind),  //
+        row_ptr_orig(row_ptr),  //  storing in orig, for format 2 only
+        val_orig(val),          //
+        //counts(counts),
+        transcript_lengths_(transcript_lengths)
+{
+    has_gene_mappings_ = false;
+    has_equivalence_classes_ = true;
+    total_reads_ = 0;
+    sample_index = 0;
+
+    /*
+    for (auto it = counts.begin(); it != counts.end(); ++it) {
+        std::cout << "*it=" << *it << std::endl;
+        total_reads_ += *it;
     }
-*/
+    */
+}
+
+
+void AlignmentIncidenceMatrix::setCounts(std::vector<int> counts_) {
+    this->counts = counts_;
+
+    this->total_reads_ = 0;
+
+    for (auto it = this->counts.begin(); it != this->counts.end(); ++it) {
+        this->total_reads_ += *it;
+    }
 }
 
 
@@ -90,6 +125,78 @@ void AlignmentIncidenceMatrix::setGeneMappings(std::vector<int> tx_to_gene) {
 void AlignmentIncidenceMatrix::setGeneNames(std::vector<std::string> gene_names) {
     this->gene_names = gene_names;
 }
+
+void AlignmentIncidenceMatrix::setSampleFilter(int sample_idx_, std::vector<int> rows) {
+    this->sample_index = sample_idx_;
+    this->row_filters = rows;
+
+    std::vector<int> row_ptr;
+    std::vector<int> col_ind;
+    std::vector<int> val;
+    row_ptr.push_back(0);
+
+    //std::cout << "# rows = " << rows.size() << std::endl;
+
+    for (int i = 0; i < rows.size(); i++) {
+        int row = rows[i];
+        //std::cout << "rows[" << i << "]=" << row << std::endl;
+
+        int idx_1 = this->row_ptr_orig[i];
+        int idx_2 = this->row_ptr_orig[i+1];
+
+        //std::cout << "idx_1:idx_2=" << idx_1 << ":" << idx_2 << std::endl;
+
+        for (int j = idx_1; j < idx_2; ++j) {
+            col_ind.push_back(this->col_ind_orig[j]);
+            val.push_back(this->val_orig[j]);
+        }
+
+        row_ptr.push_back(idx_2 - idx_1);
+
+    }
+
+    this->row_ptr = row_ptr;
+    this->col_ind = col_ind;
+    this->val = val;
+
+
+    /*
+    std::cout << "row_ptr" << std::endl;
+    for (int i = 0; i < 10; i++) {
+        std::cout << "[" << i << "]\t" << row_ptr[i] << std::endl;
+    }
+    for (int i = row_ptr.size() - 10; i < row_ptr.size(); i++) {
+        std::cout << "[" << i << "]\t" << row_ptr[i] << std::endl;
+    }
+
+    std::cout << "col_ind" << std::endl;
+    for (int i = 0; i < 10; i++) {
+        std::cout << "[" << i << "]\t" << col_ind[i] << std::endl;
+    }
+    for (int i = col_ind.size() - 10; i < col_ind.size(); i++) {
+        std::cout << "[" << i << "]\t" << col_ind[i] << std::endl;
+    }
+
+    std::cout << "values" << std::endl;
+    for (int i = 0; i < 10; i++) {
+        std::cout << "[" << i << "]\t" << val[i] << std::endl;
+    }
+    for (int i = val.size() - 10; i < val.size(); i++) {
+        std::cout << "[" << i << "]\t" << val[i] << std::endl;
+    }
+
+    std::cout << "list of 0 values" << std::endl;
+    for (int i = 0; i < val.size(); i++) {
+        if (val[i] <= 0) {
+            std::cout << "[" << i << "]\t" << val[i] << std::endl;
+        }
+    }
+     */
+
+
+}
+
+
 
 /*
     This function reads in a file with the format described below and
