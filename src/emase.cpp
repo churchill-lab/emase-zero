@@ -217,9 +217,8 @@ int main(int argc, char **argv) {
     if (verbose) {
         std::cout << "File had the following haplotype names:\n";
         for (auto it = hap_names.begin(); it != hap_names.end(); ++it) {
-            std::cout << "[" << *it << "]" << std::endl;
+            std::cout << *it << std::endl;
         }
-        std::cout << std::endl;
 
         if (format != 2) {
             if (aim->has_equivalence_classes()) {
@@ -262,15 +261,8 @@ int main(int argc, char **argv) {
         }
 
         t1 = clock();
-        std::cout<<"SampleAllelicExpression"<<std::endl;
         SampleAllelicExpression sae(aim, tolerance);
-        std::cout<<"SampleAllelicExpression done"<<std::endl;
         t2 = clock();
-
-
-
-
-
 
         if (verbose) {
             diff = ((float)t2-(float)t1)/CLOCKS_PER_SEC;

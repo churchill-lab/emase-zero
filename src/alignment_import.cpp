@@ -205,10 +205,12 @@ AlignmentIncidenceMatrix *loadFromBin(std::string filename) {
     int total_elements_lengths = num_transcripts * num_haplotypes;
     std::vector<double> transcript_lengths(total_elements_lengths);
 
+    /*
     std::cout << "===========" << std::endl;
     std::cout << "TRANSCRIPTS" << std::endl;
     std::cout << "===========" << std::endl;
     std::cout << "#\tTRANSCRIPT\tLENGTHS" << std::endl;
+    */
 
     for (int i = 0; i < num_transcripts; ++i) {
         size = readIntFromFile(gzinfile, infile);
@@ -221,22 +223,22 @@ AlignmentIncidenceMatrix *loadFromBin(std::string filename) {
         buffer.push_back('\0');
         transcripts[i] = std::string(buffer.data());
 
-        if (i < 10) {
-            std::cout << "[" << i << "]\t" << transcripts[i];
-        }
-
         for (int h = 0; h < num_haplotypes; ++h) {
             double length = (double)readIntFromFile(gzinfile, infile);
+            /*
             if (i < 10) {
                 std::cout << "\t" << length;
             }
+            */
 
             transcript_lengths[(i * num_haplotypes) + h] = std::max(length, 1.0);
         }
 
+        /*
         if (i < 10) {
             std::cout << std::endl;
         }
+        */
     }
 
     if (format == 0) {
@@ -351,14 +353,12 @@ AlignmentIncidenceMatrix *loadFromBin(std::string filename) {
         int num_ec = readIntFromFile(gzinfile, infile);
         counts.reserve(num_ec);
 
-
         //infile.read((char*)&counts[0], num_classes*sizeof(int));
         std::cout << "EC\n";
         for (int j = 0; j < num_ec; j++) {
             int count = readIntFromFile(gzinfile, infile);
             counts.push_back(count);
-
-            std::cout << "[" << j << "]\t" << counts[j] << std::endl;
+            //std::cout << "[" << j << "]\t" << counts[j] << std::endl;
         }
 
 
