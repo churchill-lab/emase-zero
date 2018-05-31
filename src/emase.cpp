@@ -271,9 +271,6 @@ int main(int argc, char **argv) {
     for (int i = sample_start; i < sample_end + 1; ++i) {
         if (format == 2) {
             std::cout << "SAMPLE " << i << " : " << sample_names[i] << std::endl;
-        }
-
-        if (format == 2) {
             loadNFromBin(input_filename, *aim, i);
         }
 

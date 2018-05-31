@@ -482,7 +482,7 @@ void loadNFromBin(std::string filename, AlignmentIncidenceMatrix &aim, int sampl
     if (format == 0) {
         std::cout << "N matrix is not in Format 0" << std::endl;
     } else if (format == 1) {
-        std::cout << "N matrix is not in Format 0" << std::endl;
+        std::cout << "N matrix is not in Format 1" << std::endl;
     } else if (format == 2) {
         //
         // read "N" matrix (csc format)
