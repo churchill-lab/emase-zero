@@ -541,7 +541,7 @@ int main(int argc, char **argv) {
         int num_indptr_csc = readIntFromFile(gzinfile, infile);
         int nnz_csc = readIntFromFile(gzinfile, infile);
 
-        std::cout << "N MATRIX ROW PTR: " << num_indptr_csc << std::endl;
+        std::cout << "N MATRIX IND PTR: " << num_indptr_csc << std::endl;
         std::cout << "N MATRIX NNZ: " << nnz_csc << std::endl;
 
         long n_tell = fileTell(gzinfile, infile);
@@ -686,19 +686,22 @@ int main(int argc, char **argv) {
             }
 
 
+            std::cout << "Sample: " << sample_idx << ", " << samples[sample_idx] << std::endl;
             if (verbose) {
-                std::cout << "Sample: " << sample_idx << ", " << samples[sample_idx] << std::endl;
                 std::cout << "Row\tValue" << std::endl;
-                int counter = 0;
-                long sum = 0;
-                for (int i = 0; i < row_values.size(); ++i) {
-                    std::cout << row_values[i] << "\t" << data[i] << std::endl;
-                    sum += data[i];
-                    counter++;
-                }
-                std::cout << "Counter: " << counter << std::endl;
-                std::cout << "Sum: " << sum << std::endl;
             }
+            int counter = 0;
+            long sum = 0;
+            for (int i = 0; i < row_values.size(); ++i) {
+                if (verbose) {
+                    std::cout << row_values[i] << "\t" << data[i] << std::endl;
+                }
+                sum += data[i];
+                counter++;
+            }
+
+            std::cout << "Counter: " << counter << std::endl;
+            std::cout << "Sum: " << sum << std::endl;
         }
     }
 

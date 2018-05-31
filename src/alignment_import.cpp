@@ -395,12 +395,14 @@ AlignmentIncidenceMatrix *loadFromBin(std::string filename) {
         int num_rowptr = readIntFromFile(gzinfile, infile);
         int nnz = readIntFromFile(gzinfile, infile);
 
-        std::cout << "A MATRIX ROW PTR: " << num_rowptr << std::endl;
+        std::cout << "A MATRIX IND PTR: " << num_rowptr << std::endl;
         std::cout << "A MATRIX NNZ: " << nnz << std::endl;
 
         row_ptr.reserve(num_rowptr);
         col_ind.reserve(nnz);
         values.reserve(nnz);
+
+        long sum_a = 0;
 
         //infile.read((char*)&row_offsets[0], (num_ecs + 1) * sizeof(int));
         //infile.read((char*)&columns[0], nnz * sizeof(int));
@@ -416,8 +418,12 @@ AlignmentIncidenceMatrix *loadFromBin(std::string filename) {
         }
 
         for (int j = 0; j < nnz; j++) {
-            values.push_back(readIntFromFile(gzinfile, infile));
+            int v = readIntFromFile(gzinfile, infile);
+            values.push_back(v);
+            sum_a += v;
         }
+
+        std::cout << "A MATRIX SUM: " << nnz << std::endl;
 
         /*
         std::cout << "row_ptr" << std::endl;
@@ -494,7 +500,7 @@ void loadNFromBin(std::string filename, AlignmentIncidenceMatrix &aim, int sampl
         int num_indptr_csc = readIntFromFile(gzinfile, infile);
         int nnz_csc = readIntFromFile(gzinfile, infile);
 
-        std::cout << "N MATRIX ROW PTR: " << num_indptr_csc << std::endl;
+        std::cout << "N MATRIX IND PTR: " << num_indptr_csc << std::endl;
         std::cout << "N MATRIX NNZ: " << nnz_csc << std::endl;
 
         n_tell = fileTell(gzinfile, infile);
@@ -572,12 +578,17 @@ void loadNFromBin(std::string filename, AlignmentIncidenceMatrix &aim, int sampl
          * the actual values in the CSC matrix.
          */
         std::vector<int> data(idx_2 - idx_1);
+        long sum_n = 0;
         //std::cout << "data.size()=" << data.size() << std::endl;
         for (int x = 0; x < (idx_2 - idx_1); x++) {
             int value = readIntFromFile(gzinfile, infile);
             data[x] = value;
+            sum_n += value;
             //std::cout << "x = " << x << ", value = " << value << std::endl;
         }
+
+        std::cout << "SAMPLE " << sample_idx << " DATA NNZ: " << data.size() << std::endl;
+        std::cout << "SAMPLE " << sample_idx << " DATA SUM: " << sum_n << std::endl;
 
         aim.setSampleFilter(sample_idx, row_values);
         aim.setCounts(data);

@@ -135,20 +135,23 @@ void AlignmentIncidenceMatrix::setSampleFilter(int sample_idx_, std::vector<int>
     std::vector<int> val;
     row_ptr.push_back(0);
 
+    long sum_a = 0;
+
     //std::cout << "# rows = " << rows.size() << std::endl;
 
     for (int i = 0; i < rows.size(); i++) {
         int row = rows[i];
         //std::cout << "rows[" << i << "]=" << row << std::endl;
 
-        int idx_1 = this->row_ptr_orig[i];
-        int idx_2 = this->row_ptr_orig[i+1];
+        int idx_1 = this->row_ptr_orig[row];
+        int idx_2 = this->row_ptr_orig[row+1];
 
         //std::cout << "idx_1:idx_2=" << idx_1 << ":" << idx_2 << std::endl;
 
         for (int j = idx_1; j < idx_2; ++j) {
             col_ind.push_back(this->col_ind_orig[j]);
             val.push_back(this->val_orig[j]);
+            sum_a += this->val_orig[j];
         }
 
         row_ptr.push_back(idx_2 - idx_1);
@@ -159,6 +162,32 @@ void AlignmentIncidenceMatrix::setSampleFilter(int sample_idx_, std::vector<int>
     this->col_ind = col_ind;
     this->val = val;
 
+    std::cout << "FILTERED A MATRIX INDPTR: " << row_ptr.size() << std::endl;
+    std::cout << "FILTERED A MATRIX NNZ: " << col_ind.size() << std::endl;
+    std::cout << "FILTERED A MATRIX SUM: " << sum_a << std::endl;
+
+/*
+    for (int i = 0; i < rows.size(); i++) {
+        int row = rows[i];
+        //std::cout << "rows[" << i << "]=" << row << std::endl;
+
+        // idx_1 will be start index into indices, which will be column indexes
+        // idx_1 will be end index into indices, which will be column indexes
+        int idx_1 = this->row_ptr_orig[i];
+        int idx_2 = this->row_ptr_orig[i+1];
+
+        //std::cout << "idx_1:idx_2=" << idx_1 << ":" << idx_2 << std::endl;
+
+        // loop through each column between idx_1 and idx_2
+        for (int j = idx_1; j < idx_2; ++j) {
+            col_ind.push_back(this->col_ind_orig[j]);
+            val.push_back(this->val_orig[j]);
+        }
+
+        row_ptr.push_back(idx_2 - idx_1);
+
+    }
+*/
 
     /*
     std::cout << "row_ptr" << std::endl;

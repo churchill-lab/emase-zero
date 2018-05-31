@@ -246,11 +246,7 @@ int main(int argc, char **argv) {
 
     // Loop through all the samples specified
     for (int i = sample_start; i < sample_end + 1; ++i) {
-        std::cout << "SAMPLE = " << i << std::endl;
-
-        if (i != sample_start) {
-            //std::vector<int> hap_names = aim->get_haplotype_names();
-        }
+        std::cout << "SAMPLE " << i << " : " << sample_names[i] << std::endl;
 
         if (format == 2) {
             loadNFromBin(input_filename, *aim, i);
