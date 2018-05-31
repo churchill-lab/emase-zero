@@ -281,6 +281,7 @@ void SampleAllelicExpression::updateModel1() {
         genes_total += transcript_sums_[i];
     }
 
+    //std::cout << "END: " << end << std::endl;
     //iterate over each read
     for (int i = 0; i != end; ++i) {
         read_sum = 0.0;
@@ -362,6 +363,7 @@ void SampleAllelicExpression::updateModel1() {
             }
         }
 
+        //std::cout << "read_sum: " << read_sum << std::endl;
         // now we can normalize by read and sum into current_
         if (read_sum > 0) {
             work_index = 0;
