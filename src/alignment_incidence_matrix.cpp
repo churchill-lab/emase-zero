@@ -288,7 +288,7 @@ bool AlignmentIncidenceMatrix::loadGeneMappings(std::string filename) {
         }
 
         // now we have a vector of tokens from this line.  The first token is
-        // the gene name,  the other tokens are the trascripts that belong to
+        // the gene name,  the other tokens are the transcripts that belong to
         // that gene
         gene_names.push_back(tokens[0]);
 

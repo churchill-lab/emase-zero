@@ -423,7 +423,7 @@ AlignmentIncidenceMatrix *loadFromBin(std::string filename) {
             sum_a += v;
         }
 
-        std::cout << "A MATRIX SUM: " << nnz << std::endl;
+        std::cout << "A MATRIX SUM: " << sum_a << std::endl;
 
         /*
         std::cout << "row_ptr" << std::endl;

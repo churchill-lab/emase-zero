@@ -91,8 +91,8 @@ public:
         return gene_names;
     }
 
-    inline void setTranscriptLengths(int length) {
-        std::fill(transcript_lengths_.begin(), transcript_lengths_.end(), 1);
+    inline void setTranscriptLengths(double length) {
+        std::fill(transcript_lengths_.begin(), transcript_lengths_.end(), length);
     }
 
 

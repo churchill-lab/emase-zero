@@ -376,24 +376,6 @@ int main(int argc, char **argv) {
         }
     } else if (format == 1) {
 
-        //
-        // load list of ec (equivalence classes)
-        //
-
-        int num_ecs = readIntFromFile(gzinfile, infile);
-        ecs.reserve(num_ecs);
-
-        std::cout << "EC: " << num_ecs << std::endl;
-
-        for (int j = 0; j < num_ecs; j++) {
-            int c = readIntFromFile(gzinfile, infile);
-            ecs.push_back(c);
-
-            if (verbose) {
-                std::cout << c << std::endl;
-            }
-        }
-
         /*
          * OLD WAY
          *
@@ -455,6 +437,25 @@ int main(int argc, char **argv) {
                 std::cout << "#" << j << ": " << d << std::endl;
             }
         }
+
+        //
+        // load list of ec (equivalence classes)
+        //
+
+        int num_ecs = readIntFromFile(gzinfile, infile);
+        ecs.reserve(num_ecs);
+
+        std::cout << "EC: " << num_ecs << std::endl;
+
+        for (int j = 0; j < num_ecs; j++) {
+            int c = readIntFromFile(gzinfile, infile);
+            ecs.push_back(c);
+
+            if (verbose) {
+                std::cout << "#" << j << ": " << c << std::endl;
+            }
+        }
+
     } else if (format == 2) {
 
         //

@@ -244,7 +244,7 @@ int main(int argc, char **argv) {
 
     if (no_length_correction) {
         std::cout << "Length Correction: No " << std::endl;
-        aim->setTranscriptLengths(1);
+        aim->setTranscriptLengths(1.0);
     } else {
         std::cout << "Length Correction: Yes " << std::endl;
     }
@@ -254,16 +254,24 @@ int main(int argc, char **argv) {
             std::cout << "Loading Gene Mapping File " << gene_file << std::endl;
         }
         aim->loadGeneMappings(gene_file);
+        if (verbose) {
+            std::cout << "Gene Mappings Loaded" << std::endl;
+        }
     }
+
 
     if (model != SampleAllelicExpression::MODEL_4 && !aim->has_gene_mappings()) {
         std::cerr << "[ERROR] File does not contain transcript to gene mapping information.  Only normalization Model 4 can be used.\n";
         return 1;
     }
 
+    std::cout << "0" << std::endl;
+
     // Loop through all the samples specified
     for (int i = sample_start; i < sample_end + 1; ++i) {
-        std::cout << "SAMPLE " << i << " : " << sample_names[i] << std::endl;
+        if (format == 2) {
+            std::cout << "SAMPLE " << i << " : " << sample_names[i] << std::endl;
+        }
 
         if (format == 2) {
             loadNFromBin(input_filename, *aim, i);
