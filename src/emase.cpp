@@ -46,6 +46,7 @@ int main(int argc, char **argv) {
     int sample_start = 0;
     int sample_end = 0;
     int verbose = 0;
+    int no_length_correction = 0;
 
     double tolerance = 0.0001;
 
@@ -61,6 +62,7 @@ int main(int argc, char **argv) {
     static struct option long_options[] = {
         {"help", no_argument, 0, 'h'},
         {"model", required_argument, 0, 'm'},
+        {"no-length-correction", no_argument, &no_length_correction, 'n'},
         {"outbase", required_argument, 0, 'o'},
         {"max-iterations", required_argument, 0, 'i'},
         {"gene-mappings", required_argument, 0, 'g'},
@@ -74,7 +76,7 @@ int main(int argc, char **argv) {
     int c;
     int option_index = 0;
 
-    while ((c = getopt_long(argc, argv, "hm:o:i:g:s:vVc:t:", long_options,
+    while ((c = getopt_long(argc, argv, "hm:no:i:g:s:vVc:t:", long_options,
                             &option_index)) != -1) {
         switch (c) {
             case 'h':
@@ -102,6 +104,10 @@ int main(int argc, char **argv) {
                         break;
                 }
 
+                break;
+
+            case 'n':
+                no_length_correction = 1;
                 break;
 
             case 'o':
@@ -165,19 +171,23 @@ int main(int argc, char **argv) {
     if (!gene_file.empty()) {
         std::cout << "Grouping File: " << gene_file << std::endl;
     } else {
-        std::cout << "Grouping File: None\n";
+        std::cout << "Grouping File: None" << std::endl;
     }
 
     int gzipped = isGZipped(input_filename);
     int format = getBinFormat(input_filename);
 
-    std::cout << "Compressed: " << gzipped << "\n";
-    std::cout << "Format: " << format << "\n";
+    if (gzipped) {
+        std::cout << "Compressed: Yes" << std::endl;
+    } else {
+        std::cout << "Compressed: No" << std::endl;
+    }
 
+    std::cout << "Format: " << format << std::endl;
 
     if (samples_str.length() > 0) {
         if (format != 2) {
-            std::cerr << "\n[ERROR] Samples are not supported in format 0 or 1\n";
+            std::cerr << "\n[ERROR] Samples are not supported in format 0 or 1" << std::endl;
             print_help();
             return 1;
         }
@@ -207,7 +217,7 @@ int main(int argc, char **argv) {
     aim = loadFromBin(input_filename);
 
     if (!aim) {
-        std::cerr << "Error loading binary input file\n";
+        std::cerr << "Error loading binary input file" << std::endl;
         return 1;
     }
 
@@ -215,7 +225,7 @@ int main(int argc, char **argv) {
     std::vector<std::string> sample_names = aim->get_sample_names();
 
     if (verbose) {
-        std::cout << "File had the following haplotype names:\n";
+        std::cout << "File had the following haplotype names:" << std::endl;
         for (auto it = hap_names.begin(); it != hap_names.end(); ++it) {
             std::cout << *it << std::endl;
         }
@@ -224,12 +234,19 @@ int main(int argc, char **argv) {
             if (aim->has_equivalence_classes()) {
                 std::cout << aim->num_alignment_classes()
                           << " alignment classes loaded ("
-                          << aim->total_reads() << " total reads)\n";
+                          << aim->total_reads() << " total reads)"
+                          << std::endl;
             }
         }
-        std::cout << aim->num_transcripts() << " transcripts\n";
+        std::cout << aim->num_transcripts() << " transcripts" << std::endl;
 
-        std::cout << std::endl;
+    }
+
+    if (no_length_correction) {
+        std::cout << "Length Correction: No " << std::endl;
+        aim->setTranscriptLengths(1);
+    } else {
+        std::cout << "Length Correction: Yes " << std::endl;
     }
 
     if (!gene_file.empty()) {
@@ -253,7 +270,7 @@ int main(int argc, char **argv) {
         }
 
         if (verbose) {
-            std::cout << aim->total_reads() << " reads loaded\n";
+            std::cout << aim->total_reads() << " reads loaded" << std::endl;
         }
 
         t1 = clock();
@@ -301,8 +318,8 @@ int main(int argc, char **argv) {
             t2 = clock();
 
             diff = ((float)t2 - (float)t1) / CLOCKS_PER_SEC;
-            std::cout << "Time for " << num_iterations << " iterations = " << diff << "s\n";
-            std::cout << "Time per iteration " << std::setprecision(2) << diff/num_iterations << "s\n";
+            std::cout << "Time for " << num_iterations << " iterations = " << diff << "s" << std::endl;
+            std::cout << "Time per iteration " << std::setprecision(2) << diff/num_iterations << "s" << std::endl;
         }
 
         std::cout << "Saving results..." << std::endl;
@@ -317,7 +334,7 @@ int main(int argc, char **argv) {
             sae.saveStackSums(output_filename, sample_names[i]);
             sae.updateNoApplyTL(model);
             sae.saveStackSums(output_filename_counts, sample_names[i]);
-            std::cout << "Done.\n";
+            std::cout << "Done." << std::endl;
         } else {
             sae.saveStackSums(output_filename);
             sae.updateNoApplyTL(model);
@@ -325,7 +342,7 @@ int main(int argc, char **argv) {
         }
     }
 
-    std::cout << "Program finished.\n";
+    std::cout << "Program finished." << std::endl;
 
     return 0;
 }
@@ -360,6 +377,8 @@ void print_help() {
               << "      iteration to the next is lower than this value multiplied by\n"
               << "      1,000,000 if performing length adjustment and multipled by #reads if\n"
               << "      not (Default = 0.0001)\n\n"
+              << "  --no-length-correction (-n):\n"
+              << "      Do not use transcript lengths as correction\n\n"
               << "  --verbose (-v):\n"
               <<"       Run in verbose mode\n\n"
               << "  --version:\n"
