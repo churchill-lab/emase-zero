@@ -91,6 +91,11 @@ public:
         return gene_names;
     }
 
+    inline void setTranscriptLengths(int length) {
+        std::fill(transcript_lengths_.begin(), transcript_lengths_.end(), 1);
+    }
+
+
     void setGeneMappings(std::vector<int> tx_to_gene);
 
     void setGeneNames(std::vector<std::string> gene_names);
