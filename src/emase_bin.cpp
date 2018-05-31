@@ -689,9 +689,15 @@ int main(int argc, char **argv) {
             if (verbose) {
                 std::cout << "Sample: " << sample_idx << ", " << samples[sample_idx] << std::endl;
                 std::cout << "Row\tValue" << std::endl;
+                int counter = 0;
+                long sum = 0;
                 for (int i = 0; i < row_values.size(); ++i) {
                     std::cout << row_values[i] << "\t" << data[i] << std::endl;
+                    sum += data[i];
+                    counter++;
                 }
+                std::cout << "Counter: " << counter << std::endl;
+                std::cout << "Sum: " << sum << std::endl;
             }
         }
     }
