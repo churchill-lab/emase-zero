@@ -660,8 +660,8 @@ bool SampleAllelicExpression::converged(double &change) {
     change = 0.0;
 
     for (int i = 0; i < size(); ++i) {
-        //change += std::abs(current_[i] - previous_[i]);
-        change += std::abs(current_[i] - previous_[i]) * alignment_incidence_->transcript_lengths_[i];
+        change += std::abs(current_[i] - previous_[i]);
+        //change += std::abs(current_[i] - previous_[i]) * alignment_incidence_->transcript_lengths_[i];
     }
 
     if (change < threshold_) {
