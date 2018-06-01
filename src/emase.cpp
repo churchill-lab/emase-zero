@@ -53,6 +53,7 @@ int main(int argc, char **argv) {
     std::string extension = ".pcl.bz2";
     std::string gene_file;
     std::string input_filename;
+    std::string transcript_length_file;
     std::string output_filename;
     std::string output_filename_counts;
     std::string samples_str;
@@ -64,6 +65,7 @@ int main(int argc, char **argv) {
         {"model", required_argument, 0, 'm'},
         {"no-length-correction", no_argument, &no_length_correction, 'n'},
         {"outbase", required_argument, 0, 'o'},
+        {"transcript-lengths", required_argument, 0, 'l'},
         {"max-iterations", required_argument, 0, 'i'},
         {"gene-mappings", required_argument, 0, 'g'},
         {"samples", required_argument, 0, 's'},
@@ -82,6 +84,10 @@ int main(int argc, char **argv) {
             case 'h':
                 print_help();
                 return 0;
+
+            case 'l':
+                transcript_length_file = std::string(optarg);
+                break;
 
             case 'm':
                 m = std::stoi(optarg);
@@ -154,7 +160,7 @@ int main(int argc, char **argv) {
     if (argc - optind == 1) {
         input_filename = argv[optind];
     } else {
-        std::cerr << "\n[ERROR] Missing required argument (input file name)\n";
+        std::cerr << "\n[ERROR] Missing required argument (input file name)" << std::endl;
         print_help();
         return 1;
     }
@@ -167,6 +173,34 @@ int main(int argc, char **argv) {
 
     std::cout << "\nemase-zero Version " << VERSION << std::endl <<std::endl;
     std::cout << "Alignment File: " << input_filename << std::endl;
+
+
+    if (!transcript_length_file.empty()) {
+        std::cout << "Transcript Length File: " << transcript_length_file
+                  << std::endl;
+
+        if (no_length_correction) {
+            std::cerr << "\n[ERROR] -n cannot be used with -t" << std::endl;
+            print_help();
+            return 1;
+        }
+    }
+    else {
+        std::cout << "Transcript Length File: None" << std::endl;
+    }
+
+    if (no_length_correction) {
+        std::cout << "Length Correction: No " << std::endl;
+        aim->setTranscriptLengths(1.0);
+
+        if (!transcript_length_file.empty()) {
+            std::cerr << "\n[ERROR] -n cannot be used with -t" << std::endl;
+            print_help();
+            return 1;
+        }
+    } else {
+        std::cout << "Length Correction: Yes " << std::endl;
+    }
 
     if (!gene_file.empty()) {
         std::cout << "Grouping File: " << gene_file << std::endl;
@@ -242,11 +276,12 @@ int main(int argc, char **argv) {
 
     }
 
-    if (no_length_correction) {
-        std::cout << "Length Correction: No " << std::endl;
-        aim->setTranscriptLengths(1.0);
-    } else {
-        std::cout << "Length Correction: Yes " << std::endl;
+    if (!transcript_length_file.empty()) {
+        if (verbose) {
+            std::cout << "Loading Transcript Length File "
+                      << transcript_length_file << std::endl;
+        }
+        aim->loadTranscriptLengths(transcript_length_file);
     }
 
     if (!gene_file.empty()) {
@@ -373,6 +408,8 @@ void print_help() {
               << "      that belong to that gene\n\n"
               << "  --max-iterations (-i) <int>:\n"
               << "      Specify the maximum number of EM iterations. (Default 999)\n\n"
+              << "  --no-length-correction (-n):\n"
+              << "      Do not use transcript lengths as correction\n\n"
               << "  --samples (-s) <string>:\n"
               << "      Specify the sample indices.  Either one number or in the format\n"
               << "      of <sample_start>:<sample_end>\n\n"
@@ -382,8 +419,9 @@ void print_help() {
               << "      iteration to the next is lower than this value multiplied by\n"
               << "      1,000,000 if performing length adjustment and multipled by #reads if\n"
               << "      not (Default = 0.0001)\n\n"
-              << "  --no-length-correction (-n):\n"
-              << "      Do not use transcript lengths as correction\n\n"
+              << "  --transcript-lengths (-l) <filename>:\n"
+              << "      Filename for transcript length file. Format of each line is\n"
+              << "     \"TranscriptName_HaplotypeName\\tlength\"\n\n"
               << "  --verbose (-v):\n"
               <<"       Run in verbose mode\n\n"
               << "  --version:\n"

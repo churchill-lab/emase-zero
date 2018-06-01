@@ -100,6 +100,8 @@ public:
 
     void setGeneNames(std::vector<std::string> gene_names);
 
+    void loadTranscriptLengths(std::string filename);
+
     bool loadGeneMappings(std::string filename);
 
     inline int num_genes() {

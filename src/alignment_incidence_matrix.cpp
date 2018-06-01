@@ -331,7 +331,7 @@ bool AlignmentIncidenceMatrix::loadGeneMappings(std::string filename) {
     return true;
 }
 
-/*
+
 void AlignmentIncidenceMatrix::loadTranscriptLengths(std::string filename) {
     std::ifstream input(filename);
 
@@ -355,6 +355,11 @@ void AlignmentIncidenceMatrix::loadTranscriptLengths(std::string filename) {
         haplotype_name_to_id[haplotype_names[i]] = i;
     }
 
+    bool split_hap = true;
+    if ((num_haplotypes() == 1) && (haplotype_names[0].length() == 0)) {
+        split_hap = false;
+    }
+
     int lengths_loaded = 0;
 
     transcript_lengths_.resize(num_transcripts() * num_haplotypes());
@@ -368,9 +373,14 @@ void AlignmentIncidenceMatrix::loadTranscriptLengths(std::string filename) {
 
     while (input >> id >> length) {
         // need to split t_name:  form read from file is transcriptName_haplotypeName
-        std::stringstream id_stringstream(id);
-        std::getline(id_stringstream, t_name, '_');
-        std::getline(id_stringstream, hap_name, '_');
+        if (split_hap) {
+            std::stringstream id_stringstream(id);
+            std::getline(id_stringstream, t_name, '_');
+            std::getline(id_stringstream, hap_name, '_');
+        } else {
+            t_name = id;
+            hap_name = "";
+        }
 
         if (++lengths_loaded > total_elements) {
             // lengths file contained more transcripts than we expected.
@@ -419,4 +429,3 @@ void AlignmentIncidenceMatrix::loadTranscriptLengths(std::string filename) {
         exit(1);
     }
 }
-*/
