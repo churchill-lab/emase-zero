@@ -39,7 +39,7 @@ public:
     inline int size() {return num_haplotypes * num_transcripts;}
     void saveStackSums(std::string filename);
     void saveStackSums(std::string filename, std::string sample_name);
-    void applyTranscriptLength();
+    void applyTranscriptLength(bool in_tpm=false);
 
 private:
     AlignmentIncidenceMatrix *alignment_incidence_;

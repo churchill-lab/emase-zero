@@ -371,15 +371,28 @@ int main(int argc, char **argv) {
         }
 
         if (format == 2) {
-            sae.saveStackSums(output_filename, sample_names[i]);
             sae.updateNoApplyTL(model);
             sae.saveStackSums(output_filename_counts, sample_names[i]);
+            sae.applyTranscriptLength(true);
+            sae.saveStackSums(output_filename, sample_names[i]);
             std::cout << "Done." << std::endl;
         } else {
-            sae.saveStackSums(output_filename);
             sae.updateNoApplyTL(model);
             sae.saveStackSums(output_filename_counts);
+            sae.applyTranscriptLength(true);
+            sae.saveStackSums(output_filename);
         }
+
+        // if (format == 2) {
+        //     sae.saveStackSums(output_filename, sample_names[i]);
+        //     sae.updateNoApplyTL(model);
+        //     sae.saveStackSums(output_filename_counts, sample_names[i]);
+        //     std::cout << "Done." << std::endl;
+        // } else {
+        //     sae.saveStackSums(output_filename);
+        //     sae.updateNoApplyTL(model);
+        //     sae.saveStackSums(output_filename_counts);
+        // }
     }
 
     std::cout << "Program finished." << std::endl;

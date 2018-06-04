@@ -648,7 +648,6 @@ void SampleAllelicExpression::updateModel4() {
         for (long j = alignment_incidence_->row_ptr[i]; j < alignment_incidence_->row_ptr[i+1]; ++j) {
             start_index = alignment_incidence_->col_ind[j] * num_haplotypes;
             for (int k = 0; k < num_haplotypes; ++k) {
-
                 current_[start_index + k] += (working_[work_index++] / read_sum)  * (double)alignment_incidence_->counts[i];
             }
         }
@@ -658,11 +657,17 @@ void SampleAllelicExpression::updateModel4() {
 
 bool SampleAllelicExpression::converged(double &change) {
     change = 0.0;
+    double current_sum = 0.0;
+    double previous_sum = 0.0;
 
     for (int i = 0; i < size(); ++i) {
-        change += std::abs(current_[i] - previous_[i]);
-        //change += std::abs(current_[i] - previous_[i]) * alignment_incidence_->transcript_lengths_[i];
+        // change += std::abs(current_[i] - previous_[i]);
+        current_sum += current_[i] * alignment_incidence_->transcript_lengths_[i];
+        previous_sum += previous_[i] * alignment_incidence_->transcript_lengths_[i];
+        change += std::abs(current_[i] - previous_[i]) * alignment_incidence_->transcript_lengths_[i];
     }
+
+    std::cout << "current sum: " << current_sum << ", previous sum: " << previous_sum << std::endl;
 
     if (change < threshold_) {
         return true;
@@ -735,26 +740,32 @@ void SampleAllelicExpression::saveStackSums(std::string filename, std::string sa
 }
 
 
-void SampleAllelicExpression::applyTranscriptLength() {
-    double sum = 0.0;
+void SampleAllelicExpression::applyTranscriptLength(bool in_tpm) {
 
     if (alignment_incidence_->transcript_lengths_.size() == 0) {
         // didn't load transcript lengths, don't do anything
         return;
     }
 
-    for (int i = 0; i < num_transcripts; i++) {
-        for (int j = 0; j < num_haplotypes;  j++) {
-
-            current_[i * num_haplotypes + j] /= alignment_incidence_->transcript_lengths_[i * num_haplotypes + j];
-
-            sum += current_[i * num_haplotypes + j];
+    if (in_tpm) {
+        double sum = 0.0;
+        for (int i = 0; i < num_transcripts; i++) {
+            for (int j = 0; j < num_haplotypes;  j++) {
+                current_[i * num_haplotypes + j] /= alignment_incidence_->transcript_lengths_[i * num_haplotypes + j];
+                sum += current_[i * num_haplotypes + j];
+            }
+        }
+        for (int i = 0; i < num_transcripts; i++) {
+            for (int j = 0; j < num_haplotypes; j++) {
+                current_[i * num_haplotypes + j] *= 1000000.0 / sum;
+            }
+        }
+    } else {
+        for (int i = 0; i < num_transcripts; i++) {
+            for (int j = 0; j < num_haplotypes;  j++) {
+                current_[i * num_haplotypes + j] /= alignment_incidence_->transcript_lengths_[i * num_haplotypes + j];
+            }
         }
     }
 
-    for (int i = 0; i < num_transcripts; i++) {
-        for (int j = 0; j < num_haplotypes; j++) {
-            current_[i * num_haplotypes + j] *= 1000000.0 / sum;
-        }
-    }
 }
