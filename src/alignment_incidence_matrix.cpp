@@ -136,15 +136,18 @@ void AlignmentIncidenceMatrix::setSampleFilter(int sample_idx_, std::vector<int>
     row_ptr.push_back(0);
 
     long sum_a = 0;
+    int row_ptr_val = 0;
 
     //std::cout << "# rows = " << rows.size() << std::endl;
 
     for (int i = 0; i < rows.size(); i++) {
-        int row = rows[i];
+        int row_1 = rows[i];
         //std::cout << "rows[" << i << "]=" << row << std::endl;
 
-        int idx_1 = this->row_ptr_orig[row];
-        int idx_2 = this->row_ptr_orig[row+1];
+        int idx_1 = this->row_ptr_orig[row_1];
+        int idx_2 = this->row_ptr_orig[row_1+1];
+
+        //std::cout << "idx-> " << i << ": " << idx_1 << "-" << idx_2 << std::endl;
 
         //std::cout << "idx_1:idx_2=" << idx_1 << ":" << idx_2 << std::endl;
 
@@ -154,7 +157,8 @@ void AlignmentIncidenceMatrix::setSampleFilter(int sample_idx_, std::vector<int>
             sum_a += this->val_orig[j];
         }
 
-        row_ptr.push_back(idx_2 - idx_1);
+        row_ptr_val += idx_2 - idx_1;
+        row_ptr.push_back(row_ptr_val);
 
     }
 
@@ -165,6 +169,42 @@ void AlignmentIncidenceMatrix::setSampleFilter(int sample_idx_, std::vector<int>
     std::cout << "FILTERED A MATRIX INDPTR: " << row_ptr.size() << std::endl;
     std::cout << "FILTERED A MATRIX NNZ: " << col_ind.size() << std::endl;
     std::cout << "FILTERED A MATRIX SUM: " << sum_a << std::endl;
+/*
+
+    std::cout << "row_ptr" << std::endl;
+    for (int i = 0; i < row_ptr.size(); i++) {
+        std::cout << row_ptr[i] << ",";
+    }
+    std::cout << std::endl;
+    std::cout << "col_ind" << std::endl;
+    for (int i = 0; i < col_ind.size(); i++) {
+        std::cout << col_ind[i] << ",";
+    }
+    std::cout << std::endl;
+    std::cout << "val" << std::endl;
+    for (int i = 0; i < val.size(); i++) {
+        std::cout << val[i] << ",";
+    }
+    std::cout << std::endl;
+
+    std::cout << "orig row_ptr" << std::endl;
+    for (int i = 0; i < row_ptr_orig.size(); i++) {
+        std::cout << row_ptr_orig[i] << ",";
+    }
+    std::cout << std::endl;
+    std::cout << "orig col_ind" << std::endl;
+    for (int i = 0; i < col_ind_orig.size(); i++) {
+        std::cout << col_ind_orig[i] << ",";
+    }
+    std::cout << std::endl;
+    std::cout << "orig  val" << std::endl;
+    for (int i = 0; i < val_orig.size(); i++) {
+        std::cout << val_orig[i] << ",";
+    }
+    std::cout << std::endl;
+
+*/
+
 
 /*
     for (int i = 0; i < rows.size(); i++) {
