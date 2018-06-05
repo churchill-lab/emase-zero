@@ -383,16 +383,6 @@ int main(int argc, char **argv) {
             sae.saveStackSums(output_filename);
         }
 
-        // if (format == 2) {
-        //     sae.saveStackSums(output_filename, sample_names[i]);
-        //     sae.updateNoApplyTL(model);
-        //     sae.saveStackSums(output_filename_counts, sample_names[i]);
-        //     std::cout << "Done." << std::endl;
-        // } else {
-        //     sae.saveStackSums(output_filename);
-        //     sae.updateNoApplyTL(model);
-        //     sae.saveStackSums(output_filename_counts);
-        // }
     }
 
     std::cout << "Program finished." << std::endl;
@@ -410,17 +400,18 @@ void print_help() {
               << "USAGE: emase-zero [options] <alignment_incidence_file>\n\n"
               << "INPUT: Binary Alignment Incidence file prepared with alntools\n"
               << "       (https://churchill-lab.github.io/alntools/)\n\n"
-              << "OPTIONS\n"
+              << "OPTIONS:\n"
               << "  --model (-m) <int>:\n"
               << "      Specify normalization model (can be 1-4, default=1)\n\n"
               << "  --output (-o) <filename>:\n"
               << "      Specify filename for output file (default is input_basename.stacksum.tsv)\n\n"
+              << "  --transcript-lengths (-l) <filename>:\n"
+              << "      Filename for transcript length file. Format of each line is\n"
+              << "     \"TranscriptName_HaplotypeName\\tlength\"\n\n"
               << "  --gene-mappings (-g) <filename>:\n"
               << "      Filename containing transcript to gene mapping. Tab delimited file where\n"
               << "      the first field is the gene ID, all other fields are the transcript IDs\n"
               << "      that belong to that gene\n\n"
-              << "  --max-iterations (-i) <int>:\n"
-              << "      Specify the maximum number of EM iterations. (Default 999)\n\n"
               << "  --no-length-correction (-n):\n"
               << "      Do not use transcript lengths as correction\n\n"
               << "  --samples (-s) <string>:\n"
@@ -432,9 +423,8 @@ void print_help() {
               << "      iteration to the next is lower than this value multiplied by\n"
               << "      1,000,000 if performing length adjustment and multipled by #reads if\n"
               << "      not (Default = 0.0001)\n\n"
-              << "  --transcript-lengths (-l) <filename>:\n"
-              << "      Filename for transcript length file. Format of each line is\n"
-              << "     \"TranscriptName_HaplotypeName\\tlength\"\n\n"
+              << "  --max-iterations (-i) <int>:\n"
+              << "      Specify the maximum number of EM iterations. (Default 999)\n\n"
               << "  --verbose (-v):\n"
               <<"       Run in verbose mode\n\n"
               << "  --version:\n"

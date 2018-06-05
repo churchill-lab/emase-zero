@@ -719,7 +719,7 @@ void print_help() {
               << "USAGE: emase-dump [options] <alignment_incidence_file>\n\n"
               << "INPUT: Binary Alignment Incidence file prepared with alntools\n"
               << "       (https://churchill-lab.github.io/alntools/)\n\n"
-              << "OPTIONS\n"
+              << "OPTIONS:\n"
               << "  --samples (-s) <string>:\n"
               << "      Specify the sample indices.  Either one number or in the format\n"
               << "      of <sample_start>:<sample_end>\n\n"

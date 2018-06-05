@@ -681,12 +681,12 @@ void SampleAllelicExpression::saveStackSums(std::string filename) {
     std::ofstream outfile;
     outfile.open(filename, std::fstream::app);
 
-    outfile << "#Transcript";
+    outfile << "#target_id";
 
     for (int i = 0; i < num_haplotypes; i++) {
         outfile << '\t' << alignment_incidence_->haplotype_names[i];
     }
-    outfile << '\t' << "sum" << std::endl;
+    outfile << '\t' << "total" << std::endl;
 
     // use 4 fixed decimal places for output
     outfile << std::fixed;
@@ -712,13 +712,13 @@ void SampleAllelicExpression::saveStackSums(std::string filename, std::string sa
     std::ofstream outfile;
     outfile.open(filename, std::fstream::app);
 
-    outfile << "##Sample: " << sample_name << std::endl;
-    outfile << "#Transcript";
+    outfile << "##sample_id: " << sample_name << std::endl;
+    outfile << "#target_id";
 
     for (int i = 0; i < num_haplotypes; i++) {
         outfile << '\t' << alignment_incidence_->haplotype_names[i];
     }
-    outfile << '\t' << "sum" << std::endl;
+    outfile << '\t' << "total" << std::endl;
 
     // use 4 fixed decimal places for output
     outfile << std::fixed;
