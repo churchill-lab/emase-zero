@@ -135,8 +135,8 @@ long fileTell(gzFile gzinfile, std::ifstream &infile) {
 
 int main(int argc, char **argv) {
     int verbose = 0;
-    int sample_start = 0;
-    int sample_end = 0;
+    int sample_start = -1;
+    int sample_end = -1;
 
     std::string input_filename;
     std::string samples_str;
@@ -598,6 +598,9 @@ int main(int argc, char **argv) {
         */
 
         //std::cout << "n_tell = " << n_tell << std::endl;
+        if (sample_start <= -1) {
+            return 0;
+        }
 
         /**
          * To load only the information we need from the CSC matrix.
