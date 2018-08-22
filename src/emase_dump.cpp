@@ -548,9 +548,9 @@ int main(int argc, char **argv) {
         long n_tell = fileTell(gzinfile, infile);
 
 
-
         /**
          * To load ALL data from binary file into CSC representation.
+         */
         if (verbose) {
             std::vector<int> indptr_csc(num_indptr_csc);
             std::vector<int> indices_csc(nnz_csc);
@@ -595,7 +595,7 @@ int main(int argc, char **argv) {
                 }
             }
         }
-        */
+
 
         //std::cout << "n_tell = " << n_tell << std::endl;
         if (sample_start <= -1) {

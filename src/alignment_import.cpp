@@ -395,8 +395,8 @@ AlignmentIncidenceMatrix *loadFromBin(std::string filename) {
         int num_rowptr = readIntFromFile(gzinfile, infile);
         int nnz = readIntFromFile(gzinfile, infile);
 
-        std::cout << "A MATRIX IND PTR: " << num_rowptr << std::endl;
-        std::cout << "A MATRIX NNZ: " << nnz << std::endl;
+        //std::cout << "A MATRIX IND PTR: " << num_rowptr << std::endl;
+        //std::cout << "A MATRIX NNZ: " << nnz << std::endl;
 
         row_ptr.reserve(num_rowptr);
         col_ind.reserve(nnz);
@@ -423,7 +423,7 @@ AlignmentIncidenceMatrix *loadFromBin(std::string filename) {
             sum_a += v;
         }
 
-        std::cout << "A MATRIX SUM: " << sum_a << std::endl;
+        //std::cout << "A MATRIX SUM: " << sum_a << std::endl;
 
         /*
         std::cout << "row_ptr" << std::endl;
@@ -500,8 +500,8 @@ void loadNFromBin(std::string filename, AlignmentIncidenceMatrix &aim, int sampl
         int num_indptr_csc = readIntFromFile(gzinfile, infile);
         int nnz_csc = readIntFromFile(gzinfile, infile);
 
-        std::cout << "N MATRIX IND PTR: " << num_indptr_csc << std::endl;
-        std::cout << "N MATRIX NNZ: " << nnz_csc << std::endl;
+        //std::cout << "N MATRIX IND PTR: " << num_indptr_csc << std::endl;
+        //std::cout << "N MATRIX NNZ: " << nnz_csc << std::endl;
 
         n_tell = fileTell(gzinfile, infile);
 
@@ -587,8 +587,8 @@ void loadNFromBin(std::string filename, AlignmentIncidenceMatrix &aim, int sampl
             //std::cout << "x = " << x << ", value = " << value << std::endl;
         }
 
-        std::cout << "SAMPLE " << sample_idx << " DATA NNZ: " << data.size() << std::endl;
-        std::cout << "SAMPLE " << sample_idx << " DATA SUM: " << sum_n << std::endl;
+        //std::cout << "SAMPLE " << sample_idx << " DATA NNZ: " << data.size() << std::endl;
+        //std::cout << "SAMPLE " << sample_idx << " DATA SUM: " << sum_n << std::endl;
 
         aim.setSampleFilter(sample_idx, row_values);
         aim.setCounts(data);

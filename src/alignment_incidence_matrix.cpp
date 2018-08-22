@@ -166,9 +166,9 @@ void AlignmentIncidenceMatrix::setSampleFilter(int sample_idx_, std::vector<int>
     this->col_ind = col_ind;
     this->val = val;
 
-    std::cout << "FILTERED A MATRIX INDPTR: " << row_ptr.size() << std::endl;
-    std::cout << "FILTERED A MATRIX NNZ: " << col_ind.size() << std::endl;
-    std::cout << "FILTERED A MATRIX SUM: " << sum_a << std::endl;
+    //std::cout << "FILTERED A MATRIX INDPTR: " << row_ptr.size() << std::endl;
+    //std::cout << "FILTERED A MATRIX NNZ: " << col_ind.size() << std::endl;
+    //std::cout << "FILTERED A MATRIX SUM: " << sum_a << std::endl;
 /*
 
     std::cout << "row_ptr" << std::endl;

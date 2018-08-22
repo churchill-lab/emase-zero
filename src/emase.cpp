@@ -300,8 +300,6 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-    std::cout << "0" << std::endl;
-
     // Loop through all the samples specified
     for (int i = sample_start; i < sample_end + 1; ++i) {
         if (format == 2) {
