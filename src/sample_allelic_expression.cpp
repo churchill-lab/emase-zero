@@ -667,7 +667,7 @@ bool SampleAllelicExpression::converged(double &change) {
         change += std::abs(current_[i] - previous_[i]) * alignment_incidence_->transcript_lengths_[i];
     }
 
-    //std::cout << "current sum: " << current_sum << ", previous sum: " << previous_sum << std::endl;
+    std::cout << "current sum: " << current_sum << ", previous sum: " << previous_sum << std::endl;
 
     if (change < threshold_) {
         return true;
