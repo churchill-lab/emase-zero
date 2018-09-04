@@ -140,11 +140,14 @@ int main(int argc, char **argv) {
 
     std::string input_filename;
     std::string samples_str;
+    std::string samples_names_str;
 
     bool bad_args = false;
+    bool find_sample_idx = false;
 
     static struct option long_options[] = {
         {"help", no_argument, 0, 'h'},
+        {"names", required_argument, 0, 'n'},
         {"samples", required_argument, 0, 's'},
         {"verbose", no_argument, &verbose, 1},
         {"version", no_argument, 0, 'V'},
@@ -154,12 +157,16 @@ int main(int argc, char **argv) {
     int c;
     int option_index = 0;
 
-    while ((c = getopt_long(argc, argv, "hs:vV", long_options,
+    while ((c = getopt_long(argc, argv, "hn:s:vV", long_options,
                             &option_index)) != -1) {
         switch (c) {
             case 'h':
                 print_help();
                 return 0;
+
+            case 'n':
+                samples_names_str = std::string(optarg);
+                break;
 
             case 's':
                 samples_str = std::string(optarg);
@@ -205,9 +212,33 @@ int main(int argc, char **argv) {
 
     std::cout << "Format: " << format << std::endl;
 
+    if (samples_names_str.length() > 0) {
+        if (format != 2) {
+            std::cerr << "\n[ERROR] Samples are not supported in format 0 or 1\n";
+            print_help();
+            return 1;
+        }
+
+        if (samples_str.length() > 0) {
+            std::cerr << "\n[ERROR] Sample names and sample indices are not supported at the same time\n";
+            print_help();
+            return 1;
+        }
+
+        find_sample_idx = true;
+        std::cout << "Searching for sample: " << samples_names_str << std::endl;
+    }
+
+
     if (samples_str.length() > 0) {
         if (format != 2) {
             std::cerr << "\n[ERROR] Samples are not supported in format 0 or 1\n";
+            print_help();
+            return 1;
+        }
+
+        if (samples_names_str.length() > 0) {
+            std::cerr << "\n[ERROR] Sample names and sample indices are not supported at the same time\n";
             print_help();
             return 1;
         }
@@ -467,6 +498,10 @@ int main(int argc, char **argv) {
 
         std::cout << "CRS: " << num_crs << std::endl;
 
+        std::string sample_name_tmp;
+        int found_sample_index = -1;
+
+
         for (int i = 0; i < num_crs; ++i) {
             size = readIntFromFile(gzinfile, infile);
             buffer.clear();
@@ -476,10 +511,26 @@ int main(int argc, char **argv) {
                 buffer.push_back(c);
             }
             buffer.push_back('\0');
-            samples.push_back(std::string(buffer.data()));
+            sample_name_tmp = std::string(buffer.data());
+
+            samples.push_back(sample_name_tmp);
+
+            if (find_sample_idx && (samples_names_str == sample_name_tmp)) {
+                found_sample_index = i;
+                sample_start = i;
+                sample_end = sample_start;
+            }
 
             if (verbose) {
-                std::cout << std::string(buffer.data()) << std::endl;
+                std::cout << sample_name_tmp << std::endl;
+            }
+        }
+
+        if (find_sample_idx) {
+            if (found_sample_index >= 0) {
+                std::cout << "Sample Index of '" << samples_names_str << "':" << found_sample_index << std::endl;
+            } else {
+                std::cout << "Sample Index of '" << samples_names_str << "' NOT FOUND" << std::endl;
             }
         }
 
@@ -723,6 +774,9 @@ void print_help() {
               << "INPUT: Binary Alignment Incidence file prepared with alntools\n"
               << "       (https://churchill-lab.github.io/alntools/)\n\n"
               << "OPTIONS:\n"
+              << "  --samples (-s) <string>:\n"
+              << "      Specify the sample indices.  Either one number or in the format\n"
+              << "      of <sample_start>:<sample_end>\n\n"
               << "  --samples (-s) <string>:\n"
               << "      Specify the sample indices.  Either one number or in the format\n"
               << "      of <sample_start>:<sample_end>\n\n"
