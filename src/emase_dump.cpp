@@ -741,8 +741,8 @@ int main(int argc, char **argv) {
             }
 
 
-            std::cout << "Sample: " << sample_idx << ", " << samples[sample_idx] << std::endl;
             if (verbose) {
+                std::cout << "Sample: " << sample_idx << ", " << samples[sample_idx] << std::endl;
                 std::cout << "Row\tValue" << std::endl;
             }
             int counter = 0;
