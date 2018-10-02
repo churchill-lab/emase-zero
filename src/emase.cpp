@@ -174,13 +174,12 @@ int main(int argc, char **argv) {
     std::cout << "\nemase-zero Version " << VERSION << std::endl <<std::endl;
     std::cout << "Alignment File: " << input_filename << std::endl;
 
-
     if (!transcript_length_file.empty()) {
         std::cout << "Transcript Length File: " << transcript_length_file
                   << std::endl;
 
         if (no_length_correction) {
-            std::cerr << "\n[ERROR] -n cannot be used with -t" << std::endl;
+            std::cerr << "\n[ERROR] -t cannot be used with -n" << std::endl;
             print_help();
             return 1;
         }
@@ -191,7 +190,6 @@ int main(int argc, char **argv) {
 
     if (no_length_correction) {
         std::cout << "Length Correction: No " << std::endl;
-        aim->setTranscriptLengths(1.0);
 
         if (!transcript_length_file.empty()) {
             std::cerr << "\n[ERROR] -n cannot be used with -t" << std::endl;
@@ -282,6 +280,13 @@ int main(int argc, char **argv) {
                       << transcript_length_file << std::endl;
         }
         aim->loadTranscriptLengths(transcript_length_file);
+    }
+
+    if (no_length_correction) {
+        if (verbose) {
+            std::cout << "No length correction, setting all lengths to 1.0" << std::endl;
+        }
+        aim->setTranscriptLengths(1.0);
     }
 
     if (!gene_file.empty()) {
