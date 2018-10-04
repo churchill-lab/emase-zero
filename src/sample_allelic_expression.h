@@ -35,7 +35,7 @@ public:
     ~SampleAllelicExpression();
     void update(model m = MODEL_1);
     void updateNoApplyTL(model m = MODEL_1);
-    bool converged(double &change);
+    bool converged(double &change, int verbose);
     inline int size() {return num_haplotypes * num_transcripts;}
     void saveStackSums(std::string filename_isoform, std::string filename_gene, int compact_results);
     void saveStackSums(std::string filename_isoform, std::string filename_gene, std::string sample_name, bool output_header, int compact_results);

@@ -393,7 +393,7 @@ int main(int argc, char **argv) {
                 t1_inner = clock();
                 sae.update(model);
                 t2_inner = clock();
-                converged = sae.converged(change);
+                converged = sae.converged(change, verbose);
 
                 if (verbose) {
                     std::cout << std::setw(7) << num_iterations + 1 << "    "

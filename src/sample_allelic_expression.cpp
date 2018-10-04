@@ -657,7 +657,7 @@ void SampleAllelicExpression::updateModel4() {
 }
 
 
-bool SampleAllelicExpression::converged(double &change) {
+bool SampleAllelicExpression::converged(double &change, int verbose) {
     change = 0.0;
     double current_sum = 0.0;
     double previous_sum = 0.0;
@@ -669,7 +669,10 @@ bool SampleAllelicExpression::converged(double &change) {
         change += std::abs(current_[i] - previous_[i]) * alignment_incidence_->transcript_lengths_[i];
     }
 
-    std::cout << "current sum: " << current_sum << ", previous sum: " << previous_sum << std::endl;
+    if (verbose) {
+        std::cout << "current sum: " << current_sum << ", previous sum: " << previous_sum << std::endl;
+    }
+
 
     if (change < threshold_) {
         return true;
