@@ -47,6 +47,7 @@ int main(int argc, char **argv) {
     int sample_end = 0;
     int verbose = 0;
     int no_length_correction = 0;
+    int compact_results = 0;
 
     double tolerance = 0.0001;
 
@@ -54,8 +55,10 @@ int main(int argc, char **argv) {
     std::string gene_file;
     std::string input_filename;
     std::string transcript_length_file;
-    std::string output_filename;
-    std::string output_filename_counts;
+    std::string output_filename_isoform_tpm;
+    std::string output_filename_isoform_counts;
+    std::string output_filename_gene_tpm;
+    std::string output_filename_gene_counts;
     std::string samples_str;
 
     bool bad_args = false;
@@ -63,6 +66,7 @@ int main(int argc, char **argv) {
     static struct option long_options[] = {
         {"help", no_argument, 0, 'h'},
         {"model", required_argument, 0, 'm'},
+        {"compact-results", no_argument, &compact_results, 'c'},
         {"no-length-correction", no_argument, &no_length_correction, 'n'},
         {"outbase", required_argument, 0, 'o'},
         {"transcript-lengths", required_argument, 0, 'l'},
@@ -78,12 +82,24 @@ int main(int argc, char **argv) {
     int c;
     int option_index = 0;
 
-    while ((c = getopt_long(argc, argv, "hm:no:i:l:g:s:vVc:t:", long_options,
+    while ((c = getopt_long(argc, argv, "hm:no:i:l:g:s:vVct:", long_options,
                             &option_index)) != -1) {
         switch (c) {
+            case 'c':
+                compact_results = 1;
+                break;
+
+            case 'g':
+                gene_file = std::string(optarg);
+                break;
+
             case 'h':
                 print_help();
                 return 0;
+
+            case 'i':
+                max_iterations = std::stoi(optarg);
+                break;
 
             case 'l':
                 transcript_length_file = std::string(optarg);
@@ -112,27 +128,29 @@ int main(int argc, char **argv) {
 
                 break;
 
+
             case 'n':
                 no_length_correction = 1;
                 break;
 
             case 'o':
-                output_filename = std::string(optarg);
-                output_filename_counts = std::string(optarg);
-                output_filename.append(".tpm");
-                output_filename_counts.append(".counts");
-                break;
+                output_filename_isoform_tpm = std::string(optarg);
+                output_filename_isoform_counts = std::string(optarg);
+                output_filename_gene_tpm = std::string(optarg);
+                output_filename_gene_counts = std::string(optarg);
 
-            case 'i':
-                max_iterations = std::stoi(optarg);
-                break;
-
-            case 'g':
-                gene_file = std::string(optarg);
+                output_filename_isoform_tpm.append(".isoform.tpm");
+                output_filename_isoform_counts.append(".isoform.counts");
+                output_filename_gene_tpm.append(".gene.tpm");
+                output_filename_gene_counts.append(".gene.counts");
                 break;
 
             case 's':
                 samples_str = std::string(optarg);
+                break;
+
+            case 't':
+                tolerance = std::stod(optarg);
                 break;
 
             case 'v':
@@ -140,12 +158,8 @@ int main(int argc, char **argv) {
                 break;
 
             case 'V':
-               std::cout << VERSION << std::endl;
-               return 0;
-
-            case 't':
-                tolerance = std::stod(optarg);
-                break;
+                std::cout << VERSION << std::endl;
+                return 0;
 
             case '?':
                 bad_args = true;
@@ -165,10 +179,13 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-    if (output_filename.empty()) {
+    if (output_filename_isoform_tpm.empty()) {
         //use default, based on the input file name but placed in current working directdory
-        output_filename = "emase-zero.quantified.tpm";
-        output_filename_counts = "emase-zero.quantified.counts";
+        output_filename_isoform_tpm = "emase-zero.quantified.isoform.tpm";
+        output_filename_isoform_counts = "emase-zero.quantified.isoform.counts";
+        output_filename_gene_tpm = "emase-zero.quantified.gene.tpm";
+        output_filename_gene_counts = "emase-zero.quantified.gene.counts";
+
     }
 
     std::cout << "\nemase-zero Version " << VERSION << std::endl <<std::endl;
@@ -179,7 +196,7 @@ int main(int argc, char **argv) {
                   << std::endl;
 
         if (no_length_correction) {
-            std::cerr << "\n[ERROR] -t cannot be used with -n" << std::endl;
+            std::cerr << "\n[ERROR] -l cannot be used with -n" << std::endl;
             print_help();
             return 1;
         }
@@ -192,12 +209,20 @@ int main(int argc, char **argv) {
         std::cout << "Length Correction: No " << std::endl;
 
         if (!transcript_length_file.empty()) {
-            std::cerr << "\n[ERROR] -n cannot be used with -t" << std::endl;
+            std::cerr << "\n[ERROR] -n cannot be used with -l" << std::endl;
             print_help();
             return 1;
         }
     } else {
         std::cout << "Length Correction: Yes " << std::endl;
+    }
+
+    std::cout << compact_results << std::endl;
+
+    if (compact_results) {
+        std::cout << "Compact Results: Yes" << std::endl;
+    } else {
+        std::cout << "Compact Results: No" << std::endl;
     }
 
     if (!gene_file.empty()) {
@@ -240,16 +265,23 @@ int main(int argc, char **argv) {
         std::cout << "Sample end: " << sample_end << std::endl;
     }
 
-    std::cout << "EM Model: " << model << std::endl
-              << "Output File (TPM): " << output_filename << std::endl
-              << "Output File (Counts): " << output_filename_counts << std::endl
-              << "----------------------------------------------------\n\n\n";
-
     std::cout << "Loading " << input_filename << "..." << std::endl;
     aim = loadFromBin(input_filename);
 
     if (!aim) {
         std::cerr << "Error loading binary input file" << std::endl;
+        return 1;
+    }
+
+    // bounds checking for samples
+
+    if (((aim->num_samples() == 1) && (sample_start > 0)) || ((aim->num_samples() == 1) && (sample_end > 0))) {
+        std::cerr << "[ERROR] Only 1 sample detected, do not specify sample with -s" << std::endl;
+        return 1;
+    }
+
+    if ((sample_start > aim->num_samples()) || (sample_end > aim->num_samples())) {
+        std::cerr << "[ERROR] Samples requested must be between 0 and " << aim->num_samples() - 1 << std::endl;
         return 1;
     }
 
@@ -299,11 +331,25 @@ int main(int argc, char **argv) {
         }
     }
 
-
     if (model != SampleAllelicExpression::MODEL_4 && !aim->has_gene_mappings()) {
         std::cerr << "[ERROR] File does not contain transcript to gene mapping information.  Only normalization Model 4 can be used.\n";
         return 1;
     }
+
+    bool output_header = true;
+
+    std::cout << "EM Model: " << model << std::endl
+              << "Output File (Isoform TPM): " << output_filename_isoform_tpm << std::endl
+              << "Output File (Isoform Counts): " << output_filename_isoform_counts << std::endl;
+
+
+    if(aim->has_gene_mappings()) {
+        std::cout << "Output File (Gene TPM): " << output_filename_gene_tpm << std::endl
+                  << "Output File (Gene Counts): " << output_filename_gene_counts << std::endl;
+
+    }
+
+    std::cout << "----------------------------------------------------\n\n\n";
 
     // Loop through all the samples specified
     for (int i = sample_start; i < sample_end + 1; ++i) {
@@ -369,21 +415,27 @@ int main(int argc, char **argv) {
 
         // remove the file at the start, append each sample
         if (i == sample_start) {
-            remove(output_filename.c_str());
-            remove(output_filename_counts.c_str());
+            remove(output_filename_isoform_tpm.c_str());
+            remove(output_filename_isoform_counts.c_str());
+
+            if(aim->has_gene_mappings()) {
+                remove(output_filename_gene_tpm.c_str());
+                remove(output_filename_gene_counts.c_str());
+            }
         }
 
         if (format == 2) {
             sae.updateNoApplyTL(model);
-            sae.saveStackSums(output_filename_counts, sample_names[i]);
+            sae.saveStackSums(output_filename_isoform_counts, output_filename_gene_counts, sample_names[i], output_header, compact_results);
             sae.applyTranscriptLength(true);
-            sae.saveStackSums(output_filename, sample_names[i]);
+            sae.saveStackSums(output_filename_isoform_tpm, output_filename_gene_tpm, sample_names[i], output_header, compact_results);
+            output_header = false;
             std::cout << "Done." << std::endl;
         } else {
             sae.updateNoApplyTL(model);
-            sae.saveStackSums(output_filename_counts);
+            sae.saveStackSums(output_filename_isoform_counts, output_filename_gene_counts, compact_results);
             sae.applyTranscriptLength(true);
-            sae.saveStackSums(output_filename);
+            sae.saveStackSums(output_filename_isoform_tpm, output_filename_gene_tpm, compact_results);
         }
 
     }
@@ -415,6 +467,8 @@ void print_help() {
               << "      Filename containing transcript to gene mapping. Tab delimited file where\n"
               << "      the first field is the gene ID, all other fields are the transcript IDs\n"
               << "      that belong to that gene\n\n"
+              << "  --compact-results (-c):\n"
+              << "      Omit totals that are equal to 0\n\n"
               << "  --no-length-correction (-n):\n"
               << "      Do not use transcript lengths as correction\n\n"
               << "  --samples (-s) <string>:\n"

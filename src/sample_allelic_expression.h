@@ -37,8 +37,8 @@ public:
     void updateNoApplyTL(model m = MODEL_1);
     bool converged(double &change);
     inline int size() {return num_haplotypes * num_transcripts;}
-    void saveStackSums(std::string filename);
-    void saveStackSums(std::string filename, std::string sample_name);
+    void saveStackSums(std::string filename_isoform, std::string filename_gene, int compact_results);
+    void saveStackSums(std::string filename_isoform, std::string filename_gene, std::string sample_name, bool output_header, int compact_results);
     void applyTranscriptLength(bool in_tpm=false);
 
 private:

@@ -23,6 +23,8 @@
 #include <fstream>
 #include <iomanip>
 #include <iostream>
+#include <sstream>
+#include <string>
 #include "sample_allelic_expression.h"
 
 
@@ -677,65 +679,197 @@ bool SampleAllelicExpression::converged(double &change) {
 }
 
 
-void SampleAllelicExpression::saveStackSums(std::string filename) {
-    std::ofstream outfile;
-    outfile.open(filename, std::fstream::app);
+void SampleAllelicExpression::saveStackSums(std::string filename_isoform, std::string filename_gene,
+                                            int compact_results) {
+    std::ofstream outfile_isoform;
+    outfile_isoform.open(filename_isoform, std::fstream::app);
 
-    outfile << "#target_id";
+    outfile_isoform << "#target_id";
 
-    for (int i = 0; i < num_haplotypes; i++) {
-        outfile << '\t' << alignment_incidence_->haplotype_names[i];
+    if (num_haplotypes > 1) {
+        for (int i = 0; i < num_haplotypes; i++) {
+            outfile_isoform << '\t' << alignment_incidence_->haplotype_names[i];
+        }
     }
-    outfile << '\t' << "total" << std::endl;
+
+    outfile_isoform << '\t' << "total" << std::endl;
 
     // use 4 fixed decimal places for output
-    outfile << std::fixed;
-    outfile << std::setprecision(6);
+    outfile_isoform << std::fixed;
+    outfile_isoform << std::setprecision(6);
 
     double sum;
+    std::ostringstream line;
+    double *gene_sums;
+
+    if (alignment_incidence_->has_gene_mappings_) {
+        gene_sums = new double[num_haplotypes * alignment_incidence_->num_genes()];
+        std::fill(gene_sums, gene_sums + alignment_incidence_->num_genes() * num_haplotypes, 0.0);
+    }
 
     for (int i = 0; i < num_transcripts; i++) {
-        sum = 0.0;
-        outfile << alignment_incidence_->transcript_names[i] << "\t";
+        if (num_haplotypes == 1) {
+            if (alignment_incidence_->has_gene_mappings_) {
+                gene_sums[alignment_incidence_->tx_to_gene[i]] += current_[i];
+            }
 
-        for (int j = 0; j < num_haplotypes;  j++) {
-            outfile << current_[i * num_haplotypes + j];
-            sum += current_[i * num_haplotypes + j];
-            outfile << '\t';
+            if (!(compact_results && current_[i] == 0.0)) {
+                outfile_isoform << alignment_incidence_->transcript_names[i] << '\t' << current_[i] << std::endl;
+            }
+        } else {
+            sum = 0.0;
+            line.str(std::string());
+
+            for (int j = 0; j < num_haplotypes;  j++) {
+                if (alignment_incidence_->has_gene_mappings_) {
+                    gene_sums[alignment_incidence_->tx_to_gene[i] * num_haplotypes + j] += current_[i];
+                }
+
+                line << current_[i * num_haplotypes + j];
+                sum += current_[i * num_haplotypes + j];
+                line << '\t';
+            }
+
+            if (!(compact_results && sum == 0.0)) {
+                outfile_isoform << alignment_incidence_->transcript_names[i] << '\t' << line.str() << sum << std::endl;
+            }
         }
-        outfile << sum << std::endl;
+    }
+
+    if (alignment_incidence_->has_gene_mappings_) {
+        std::ofstream outfile_gene;
+        outfile_gene.open(filename_gene, std::fstream::app);
+
+        outfile_gene << "#target_id";
+
+        if (num_haplotypes > 1) {
+            for (int i = 0; i < num_haplotypes; i++) {
+                outfile_gene << '\t' << alignment_incidence_->haplotype_names[i];
+            }
+        }
+
+        outfile_gene << '\t' << "total" << std::endl;
+
+        // use 4 fixed decimal places for output
+        outfile_gene << std::fixed;
+        outfile_gene << std::setprecision(6);
+
+        for (int i = 0; i < alignment_incidence_->num_genes(); i++) {
+            sum = 0.0;
+            line.str(std::string());
+
+            for (int j = 0; j < num_haplotypes; j++) {
+                line << gene_sums[i * num_haplotypes + j];
+                sum += gene_sums[i * num_haplotypes + j];
+                line << '\t';
+            }
+
+            if (!(compact_results && sum == 0.0)) {
+                outfile_gene << alignment_incidence_->gene_names[i] << '\t' << line.str() << sum << std::endl;
+            }
+        }
     }
 }
 
+void SampleAllelicExpression::saveStackSums(std::string filename_isoform, std::string filename_gene,
+                                            std::string sample_name, bool output_header, int compact_results) {
+    std::ofstream outfile_isoform;
+    outfile_isoform.open(filename_isoform, std::fstream::app);
 
-void SampleAllelicExpression::saveStackSums(std::string filename, std::string sample_name) {
-    std::ofstream outfile;
-    outfile.open(filename, std::fstream::app);
+    if (output_header) {
+        outfile_isoform << "#target_id";
 
-    outfile << "##sample_id: " << sample_name << std::endl;
-    outfile << "#target_id";
+        if (num_haplotypes > 1) {
+            for (int i = 0; i < num_haplotypes; i++) {
+                outfile_isoform << '\t' << alignment_incidence_->haplotype_names[i];
+            }
+        }
 
-    for (int i = 0; i < num_haplotypes; i++) {
-        outfile << '\t' << alignment_incidence_->haplotype_names[i];
+        outfile_isoform << '\t' << "total" << std::endl;
     }
-    outfile << '\t' << "total" << std::endl;
+
+    outfile_isoform << "##sample_id: " << sample_name << std::endl;
 
     // use 4 fixed decimal places for output
-    outfile << std::fixed;
-    outfile << std::setprecision(6);
+    outfile_isoform << std::fixed;
+    outfile_isoform << std::setprecision(6);
 
     double sum;
+    std::ostringstream line;
+    double *gene_sums;
+
+    if (alignment_incidence_->has_gene_mappings_) {
+        gene_sums = new double[num_haplotypes * alignment_incidence_->num_genes()];
+        std::fill(gene_sums, gene_sums + alignment_incidence_->num_genes() * num_haplotypes, 0.0);
+    }
 
     for (int i = 0; i < num_transcripts; i++) {
-        sum = 0.0;
-        outfile << alignment_incidence_->transcript_names[i] << "\t";
-        
-        for (int j = 0; j < num_haplotypes;  j++) {
-            outfile << current_[i * num_haplotypes + j];
-            sum += current_[i * num_haplotypes + j];
-            outfile << '\t';
+        if (num_haplotypes == 1) {
+            if (alignment_incidence_->has_gene_mappings_) {
+                gene_sums[alignment_incidence_->tx_to_gene[i]] += current_[i];
+            }
+
+            if (!(compact_results && current_[i] == 0.0)) {
+                outfile_isoform << alignment_incidence_->transcript_names[i] << '\t' << current_[i] << std::endl;
+            }
+        } else {
+            sum = 0.0;
+            line.str(std::string());
+
+            for (int j = 0; j < num_haplotypes;  j++) {
+                if (alignment_incidence_->has_gene_mappings_) {
+                    gene_sums[alignment_incidence_->tx_to_gene[i] * num_haplotypes + j] += current_[i];
+                }
+
+                line << current_[i * num_haplotypes + j];
+                sum += current_[i * num_haplotypes + j];
+                line << '\t';
+            }
+
+
+            if (!(compact_results && sum == 0.0)) {
+                outfile_isoform << alignment_incidence_->transcript_names[i] << '\t' << line.str() << sum << std::endl;
+            }
         }
-        outfile << sum << std::endl;
+    }
+
+
+    if (alignment_incidence_->has_gene_mappings_) {
+        std::ofstream outfile_gene;
+        outfile_gene.open(filename_gene, std::fstream::app);
+
+        if (output_header) {
+            outfile_gene << "#target_id";
+
+            if (num_haplotypes > 1) {
+                for (int i = 0; i < num_haplotypes; i++) {
+                    outfile_gene << '\t' << alignment_incidence_->haplotype_names[i];
+                }
+            }
+
+            outfile_gene << '\t' << "total" << std::endl;
+        }
+
+        outfile_gene << "##sample_id: " << sample_name << std::endl;
+
+        // use 4 fixed decimal places for output
+        outfile_gene << std::fixed;
+        outfile_gene << std::setprecision(6);
+
+        for (int i = 0; i < alignment_incidence_->num_genes(); i++) {
+            sum = 0.0;
+            line.str(std::string());
+
+            for (int j = 0; j < num_haplotypes; j++) {
+                line << gene_sums[i * num_haplotypes + j];
+                sum += gene_sums[i * num_haplotypes + j];
+                line << '\t';
+            }
+
+            if (!(compact_results && sum == 0.0)) {
+                outfile_gene << alignment_incidence_->gene_names[i] << '\t' << line.str() << sum << std::endl;
+            }
+        }
     }
 }
 
