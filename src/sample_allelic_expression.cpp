@@ -755,17 +755,23 @@ void SampleAllelicExpression::saveStackSums(std::string filename_isoform, std::s
         outfile_gene << std::setprecision(6);
 
         for (int i = 0; i < alignment_incidence_->num_genes(); i++) {
-            sum = 0.0;
-            line.str(std::string());
+            if (num_haplotypes == 1) {
+                if (!(compact_results && current_[i] == 0.0)) {
+                    outfile_gene << alignment_incidence_->gene_names[i] << '\t' << current_[i] << std::endl;
+                }
+            } else {
+                sum = 0.0;
+                line.str(std::string());
 
-            for (int j = 0; j < num_haplotypes; j++) {
-                line << gene_sums[i * num_haplotypes + j];
-                sum += gene_sums[i * num_haplotypes + j];
-                line << '\t';
-            }
+                for (int j = 0; j < num_haplotypes; j++) {
+                    line << gene_sums[i * num_haplotypes + j];
+                    sum += gene_sums[i * num_haplotypes + j];
+                    line << '\t';
+                }
 
-            if (!(compact_results && sum == 0.0)) {
-                outfile_gene << alignment_incidence_->gene_names[i] << '\t' << line.str() << sum << std::endl;
+                if (!(compact_results && sum == 0.0)) {
+                    outfile_gene << alignment_incidence_->gene_names[i] << '\t' << line.str() << sum << std::endl;
+                }
             }
         }
     }
@@ -857,17 +863,23 @@ void SampleAllelicExpression::saveStackSums(std::string filename_isoform, std::s
         outfile_gene << std::setprecision(6);
 
         for (int i = 0; i < alignment_incidence_->num_genes(); i++) {
-            sum = 0.0;
-            line.str(std::string());
+            if (num_haplotypes == 1) {
+                if (!(compact_results && current_[i] == 0.0)) {
+                    outfile_gene << alignment_incidence_->gene_names[i] << '\t' << current_[i] << std::endl;
+                }
+            } else {
+                sum = 0.0;
+                line.str(std::string());
 
-            for (int j = 0; j < num_haplotypes; j++) {
-                line << gene_sums[i * num_haplotypes + j];
-                sum += gene_sums[i * num_haplotypes + j];
-                line << '\t';
-            }
+                for (int j = 0; j < num_haplotypes; j++) {
+                    line << gene_sums[i * num_haplotypes + j];
+                    sum += gene_sums[i * num_haplotypes + j];
+                    line << '\t';
+                }
 
-            if (!(compact_results && sum == 0.0)) {
-                outfile_gene << alignment_incidence_->gene_names[i] << '\t' << line.str() << sum << std::endl;
+                if (!(compact_results && sum == 0.0)) {
+                    outfile_gene << alignment_incidence_->gene_names[i] << '\t' << line.str() << sum << std::endl;
+                }
             }
         }
     }

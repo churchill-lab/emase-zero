@@ -281,7 +281,7 @@ int main(int argc, char **argv) {
     }
 
     if ((sample_start > aim->num_samples()) || (sample_end > aim->num_samples())) {
-        std::cerr << "[ERROR] Samples requested must be between 0 and " << aim->num_samples() - 1 << std::endl;
+        std::cerr << "[ERROR] Samples requested must be between 0 and " << aim->num_samples() << std::endl;
         return 1;
     }
 
@@ -352,7 +352,7 @@ int main(int argc, char **argv) {
     std::cout << "----------------------------------------------------\n\n\n";
 
     // Loop through all the samples specified
-    for (int i = sample_start; i < sample_end + 1; ++i) {
+    for (int i = sample_start; i < sample_end; ++i) {
         if (format == 2) {
             std::cout << "SAMPLE " << i << " : " << sample_names[i] << std::endl;
             loadNFromBin(input_filename, *aim, i);
