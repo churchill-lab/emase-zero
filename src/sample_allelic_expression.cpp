@@ -797,7 +797,7 @@ void SampleAllelicExpression::saveStackSums(std::string filename_isoform, std::s
         outfile_isoform << '\t' << "total" << std::endl;
     }
 
-    outfile_isoform << "##sample_id: " << sample_name << std::endl;
+    outfile_isoform << "#sample_id: " << sample_name << std::endl;
 
     // use 4 fixed decimal places for output
     outfile_isoform << std::fixed;
