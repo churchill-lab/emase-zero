@@ -249,8 +249,9 @@ int main(int argc, char **argv) {
             return 1;
         }
 
-        std::size_t location = samples_str.find(':');
-        if (location > 0) {
+        std::size_t location = samples_str.find(':', 0);
+
+        if (location != std::string::npos) {
             std::string s_start = samples_str.substr(0, location);
             std::string s_end = samples_str.substr(location + 1);
 
@@ -258,7 +259,7 @@ int main(int argc, char **argv) {
             sample_end = std::stoi(s_end);
         } else {
             sample_start = std::stoi(samples_str);
-            sample_end = sample_start;
+            sample_end = sample_start + 1;
         }
         
         std::cout << "Sample start: " << sample_start << std::endl;
@@ -269,19 +270,24 @@ int main(int argc, char **argv) {
     aim = loadFromBin(input_filename);
 
     if (!aim) {
-        std::cerr << "Error loading binary input file" << std::endl;
+        std::cerr << "[Error] Error in binary input file" << std::endl;
         return 1;
     }
 
     // bounds checking for samples
 
-    if (((aim->num_samples() == 1) && (sample_start > 0)) || ((aim->num_samples() == 1) && (sample_end > 0))) {
+    if (sample_start >= sample_end) {
+        std::cerr << "[Error] end sample should be greater than start sample" << std::endl;
+        return 1;
+    }
+
+    if ((aim->num_samples() == 1) && ((sample_start > 0) || (sample_end > 1))) {
         std::cerr << "[ERROR] Only 1 sample detected, do not specify sample with -s" << std::endl;
         return 1;
     }
 
     if ((sample_start > aim->num_samples()) || (sample_end > aim->num_samples())) {
-        std::cerr << "[ERROR] Samples requested must be between 0 and " << aim->num_samples() << std::endl;
+        std::cerr << "[ERROR] Samples requested must be between 0 and " << aim->num_samples() - 1 << std::endl;
         return 1;
     }
 
@@ -350,6 +356,7 @@ int main(int argc, char **argv) {
     }
 
     std::cout << "----------------------------------------------------\n\n\n";
+
 
     // Loop through all the samples specified
     for (int i = sample_start; i < sample_end; ++i) {
