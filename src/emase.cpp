@@ -43,6 +43,7 @@ int main(int argc, char **argv) {
     int m;
     int max_iterations = 999;
     int num_iterations;
+    int all_samples = 1;
     int sample_start = 0;
     int sample_end = 0;
     int verbose = 0;
@@ -146,6 +147,7 @@ int main(int argc, char **argv) {
                 break;
 
             case 's':
+                all_samples = 0;
                 samples_str = std::string(optarg);
                 break;
 
@@ -272,6 +274,11 @@ int main(int argc, char **argv) {
     if (!aim) {
         std::cerr << "[Error] Error in binary input file" << std::endl;
         return 1;
+    }
+
+    if (all_samples) {
+        sample_start = 0;
+        sample_end = aim->num_samples();
     }
 
     // bounds checking for samples
