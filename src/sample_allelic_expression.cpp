@@ -703,6 +703,8 @@ void SampleAllelicExpression::saveStackSums(std::string filename_isoform, std::s
 
     double sum;
     std::ostringstream line;
+    line << std::fixed;
+    line << std::setprecision(6);
     double *gene_sums;
 
     if (alignment_incidence_->has_gene_mappings_) {
@@ -725,7 +727,7 @@ void SampleAllelicExpression::saveStackSums(std::string filename_isoform, std::s
 
             for (int j = 0; j < num_haplotypes;  j++) {
                 if (alignment_incidence_->has_gene_mappings_) {
-                    gene_sums[alignment_incidence_->tx_to_gene[i] * num_haplotypes + j] += current_[i];
+                    gene_sums[alignment_incidence_->tx_to_gene[i] * num_haplotypes + j] += current_[i * num_haplotypes + j];
                 }
 
                 line << current_[i * num_haplotypes + j];
@@ -805,6 +807,8 @@ void SampleAllelicExpression::saveStackSums(std::string filename_isoform, std::s
 
     double sum;
     std::ostringstream line;
+    line << std::fixed;
+    line << std::setprecision(6);
     double *gene_sums;
 
     if (alignment_incidence_->has_gene_mappings_) {
@@ -825,9 +829,15 @@ void SampleAllelicExpression::saveStackSums(std::string filename_isoform, std::s
             sum = 0.0;
             line.str(std::string());
 
+            //outfile_isoform << "----\nTRANSCRIPT: " << alignment_incidence_->transcript_names[i] << std::endl;
+
             for (int j = 0; j < num_haplotypes;  j++) {
                 if (alignment_incidence_->has_gene_mappings_) {
-                    gene_sums[alignment_incidence_->tx_to_gene[i] * num_haplotypes + j] += current_[i];
+                    //outfile_isoform << "HAPLOTYPE: " << alignment_incidence_->haplotype_names[j] << std::endl;
+                    //outfile_isoform << "\tVAL: " << current_[i * num_haplotypes + j] << std::endl;
+                    //outfile_isoform << "\tTOTAL WAS: " << gene_sums[alignment_incidence_->tx_to_gene[i] * num_haplotypes + j] << std::endl;
+                    gene_sums[alignment_incidence_->tx_to_gene[i] * num_haplotypes + j] += current_[i * num_haplotypes + j];
+                    //outfile_isoform << "\tNOW IS: " << gene_sums[alignment_incidence_->tx_to_gene[i] * num_haplotypes + j] << std::endl;
                 }
 
                 line << current_[i * num_haplotypes + j];
