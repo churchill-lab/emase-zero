@@ -18,15 +18,9 @@
  * along with this software. If not, see <http://www.gnu.org/licenses/>.
  */
 
-//
-//  sample_allelic_expression.h
-//
-//  Created by Glen Beane on 8/22/14.
-//
 
 #ifndef SAMPLE_ALLELIC_EXPRESSION_H
 #define SAMPLE_ALLELIC_EXPRESSION_H
-
 
 #include "alignment_incidence_matrix.h"
 #include "utilities.h"
@@ -35,21 +29,19 @@
 class SampleAllelicExpression {
 
 public:
-
     enum model {MODEL_1 = 1, MODEL_2 = 2, MODEL_3 = 3, MODEL_4 = 4};
 
     SampleAllelicExpression(AlignmentIncidenceMatrix *alignment_incidence, double tolerance);
     ~SampleAllelicExpression();
     void update(model m = MODEL_1);
     void updateNoApplyTL(model m = MODEL_1);
-    bool converged(double &change);
+    bool converged(double &change, int verbose);
     inline int size() {return num_haplotypes * num_transcripts;}
-    void saveStackSums(std::string filename);
-    void applyTranscriptLength();
+    void saveStackSums(std::string filename_isoform, std::string filename_gene, int compact_results);
+    void saveStackSums(std::string filename_isoform, std::string filename_gene, std::string sample_name, bool output_header, int compact_results);
+    void applyTranscriptLength(bool in_tpm=false);
 
 private:
-
-
     AlignmentIncidenceMatrix *alignment_incidence_;
 
     double *current_;

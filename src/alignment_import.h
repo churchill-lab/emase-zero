@@ -23,5 +23,8 @@
 
 
 AlignmentIncidenceMatrix *loadFromBin(std::string filename);
+void loadNFromBin(std::string filename, AlignmentIncidenceMatrix &aim, int sample_idx);
+bool isGZipped(std::string filename);
+int getBinFormat(std::string filename);
 
 #endif

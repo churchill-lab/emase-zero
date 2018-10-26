@@ -18,20 +18,13 @@
  * along with this software. If not, see <http://www.gnu.org/licenses/>.
  */
 
-
-//
-//  sample_allelic_expression.cpp
-//
-//
-//  Created by Glen Beane on 8/22/14.
-//
-//
-
 #include <algorithm>
 #include <cmath>
-#include <iostream>
-#include <iomanip>
 #include <fstream>
+#include <iomanip>
+#include <iostream>
+#include <sstream>
+#include <string>
 #include "sample_allelic_expression.h"
 
 
@@ -57,21 +50,25 @@ SampleAllelicExpression::SampleAllelicExpression(AlignmentIncidenceMatrix *align
     gene_masks_ = NULL;
     read_sum_by_gene_ = NULL;
 
-
+    /*
     if (alignment_incidence->transcript_lengths_.size() / num_haplotypes == alignment_incidence->num_transcripts()) {
-        // we are doing lenght adjustment, mutltiply threshold by 1M
+        // we are doing length adjustment, mutltiply threshold by 1M
         threshold_ = tolerance * 1000000;
     }
     else {
-        // no lenght adjustment, multiply threshold by number of reads
+        // no length adjustment, multiply threshold by number of reads
         threshold_ = tolerance * alignment_incidence->total_reads();
     }
+    */
+
+    threshold_ = tolerance * alignment_incidence->total_reads();
+
 
     init();
 }
 
-SampleAllelicExpression::~SampleAllelicExpression()
-{
+
+SampleAllelicExpression::~SampleAllelicExpression() {
     delete [] current_;
     delete [] previous_;
 
@@ -108,32 +105,30 @@ SampleAllelicExpression::~SampleAllelicExpression()
     }
 }
 
-void SampleAllelicExpression::init()
-{
+
+void SampleAllelicExpression::init() {
     init_normalize_read();
     applyTranscriptLength();
 }
 
-void SampleAllelicExpression::init_normalize_read()
-{
+
+void SampleAllelicExpression::init_normalize_read() {
     std::fill(current_, current_ + size(), 0.0);
+
 
     int working_size;
     int start_index;
     int free_slots;
     int work_index;
     double read_sum;
+    auto end = alignment_incidence_->row_ptr.size() - 1;
 
     working_size = num_haplotypes * 4;
     free_slots = working_size;
-
     working_ = new double[working_size];
-
-    auto end = alignment_incidence_->row_ptr.size() - 1;
 
     //iterate over each read
     for (int i = 0; i != end; ++i) {
-
         work_index = 0;
         read_sum = 0.0;
         free_slots = working_size;
@@ -142,7 +137,6 @@ void SampleAllelicExpression::init_normalize_read()
         // nozero values that make up this row
         // and there will be alignment_incidence_->row_ptr[i+1] - alignment_incidence_->row_ptr[i] values
         for (long j = alignment_incidence_->row_ptr[i]; j < alignment_incidence_->row_ptr[i+1]; ++j) {
-
             // make sure we haven't run out of memory in our working_ buffer
             // if it is full, double the capacity.  The size will always be a
             // multiple of num_haplotypes.
@@ -162,7 +156,6 @@ void SampleAllelicExpression::init_normalize_read()
             // decrement the amount of free space
             free_slots -= num_haplotypes;
 
-
             // okay, we can do the actual work for this read
             for (int k = 0; k < num_haplotypes; ++k) {
                 // initialize to 1.0 if they had a hit, 0 otherwise
@@ -175,7 +168,6 @@ void SampleAllelicExpression::init_normalize_read()
                     working_[work_index++] = 0.0;
                 }
             }
-
         }
 
         work_index = 0;
@@ -189,8 +181,7 @@ void SampleAllelicExpression::init_normalize_read()
 }
 
 
-void SampleAllelicExpression::update(SampleAllelicExpression::model m)
-{
+void SampleAllelicExpression::update(SampleAllelicExpression::model m) {
     switch (m) {
 
         case MODEL_1:
@@ -215,8 +206,7 @@ void SampleAllelicExpression::update(SampleAllelicExpression::model m)
 }
 
 
-void SampleAllelicExpression::updateNoApplyTL(SampleAllelicExpression::model m)
-{
+void SampleAllelicExpression::updateNoApplyTL(SampleAllelicExpression::model m) {
     switch (m) {
 
         case MODEL_1:
@@ -237,14 +227,12 @@ void SampleAllelicExpression::updateNoApplyTL(SampleAllelicExpression::model m)
     }
 }
 
-void SampleAllelicExpression::updateModel1()
-{
+
+void SampleAllelicExpression::updateModel1() {
     int start_index;
     int work_index;
-
     double read_sum;
     auto end = alignment_incidence_->row_ptr.size() - 1;
-
 
     if (!gene_sums_) {
         gene_sums_ =  new double[alignment_incidence_->num_genes()];
@@ -300,11 +288,9 @@ void SampleAllelicExpression::updateModel1()
         genes_total += transcript_sums_[i];
     }
 
-
+    //std::cout << "END: " << end << std::endl;
     //iterate over each read
     for (int i = 0; i != end; ++i) {
-
-
         read_sum = 0.0;
 
         /* unfortunately, given the information we have and the way it is stored in memory,  we need to make three passes over
@@ -355,7 +341,6 @@ void SampleAllelicExpression::updateModel1()
             }
         }
 
-
         // finally we can compute the actual values to add to current_
         work_index = 0;
         for (long j = alignment_incidence_->row_ptr[i]; j < alignment_incidence_->row_ptr[i+1]; ++j) {
@@ -378,7 +363,6 @@ void SampleAllelicExpression::updateModel1()
                         alignment_incidence_->val[j] &= ~(1 << k);
                     }
                     read_sum += working_[work_index++];
-
                 }
                 else {
                     working_[work_index++] = 0.0;
@@ -386,6 +370,7 @@ void SampleAllelicExpression::updateModel1()
             }
         }
 
+        //std::cout << "read_sum: " << read_sum << std::endl;
         // now we can normalize by read and sum into current_
         if (read_sum > 0) {
             work_index = 0;
@@ -403,8 +388,7 @@ void SampleAllelicExpression::updateModel1()
 }
 
 
-void SampleAllelicExpression::updateModel2()
-{
+void SampleAllelicExpression::updateModel2() {
     std::swap(current_, previous_);
 
     // clear current_ so we can use it to accumulate sums
@@ -412,12 +396,10 @@ void SampleAllelicExpression::updateModel2()
 
     int start_index;
     int work_index;
-    double transcript_sum;
     int transcript_hits;
-
+    double transcript_sum;
     double read_sum;
     auto end = alignment_incidence_->row_ptr.size() - 1;
-
 
     if (!gene_sums_) {
         gene_sums_ =  new double[alignment_incidence_->num_genes()];
@@ -452,17 +434,12 @@ void SampleAllelicExpression::updateModel2()
         gene_sums_[i] /= genes_total;
     }
 
-
-
     //iterate over each read
     for (int i = 0; i != end; ++i) {
-
         work_index = 0;
         read_sum = 0.0;
 
-
         for (long j = alignment_incidence_->row_ptr[i]; j < alignment_incidence_->row_ptr[i+1]; ++j) {
-
             gene_sum_hits_only_[alignment_incidence_->tx_to_gene[alignment_incidence_->col_ind[j]]] = 0.0;
 
             start_index = alignment_incidence_->col_ind[j] * num_haplotypes;
@@ -489,7 +466,6 @@ void SampleAllelicExpression::updateModel2()
                  working_[j * num_haplotypes + k] /= transcript_sum;
             }
         }
-
 
         // isoform_specificity
         for (long j = alignment_incidence_->row_ptr[i]; j < alignment_incidence_->row_ptr[i+1]; ++j) {
@@ -529,9 +505,7 @@ void SampleAllelicExpression::updateModel2()
 }
 
 
-void SampleAllelicExpression::updateModel3()
-{
-
+void SampleAllelicExpression::updateModel3() {
     long start_index;
     int work_index;
     double read_sum;
@@ -577,11 +551,8 @@ void SampleAllelicExpression::updateModel3()
         gene_sums_[i] /= genes_total;
     }
 
-
     //iterate over each read
     for (int i = 0; i != end; ++i) {
-
-
         read_sum = 0.0;
 
         for (long j = alignment_incidence_->row_ptr[i]; j < alignment_incidence_->row_ptr[i+1]; ++j) {
@@ -590,8 +561,8 @@ void SampleAllelicExpression::updateModel3()
         }
 
         work_index = 0;
-        for (long j = alignment_incidence_->row_ptr[i]; j < alignment_incidence_->row_ptr[i+1]; ++j) {
 
+        for (long j = alignment_incidence_->row_ptr[i]; j < alignment_incidence_->row_ptr[i+1]; ++j) {
             gene_sum_hits_only_[alignment_incidence_->tx_to_gene[alignment_incidence_->col_ind[j]]] = 0.0;
 
             start_index = alignment_incidence_->col_ind[j] * num_haplotypes;
@@ -608,8 +579,8 @@ void SampleAllelicExpression::updateModel3()
         }
 
         work_index = 0;
-        for (long j = alignment_incidence_->row_ptr[i]; j < alignment_incidence_->row_ptr[i+1]; ++j) {
 
+        for (long j = alignment_incidence_->row_ptr[i]; j < alignment_incidence_->row_ptr[i+1]; ++j) {
             for (int k = 0; k < num_haplotypes; ++k) {
                 if (alignment_incidence_->val[j] & (1 << k)) {
                     working_[work_index] /= read_sum_by_gene_[alignment_incidence_->tx_to_gene[alignment_incidence_->col_ind[j]]];
@@ -626,11 +597,11 @@ void SampleAllelicExpression::updateModel3()
                     }
                 }
                 read_sum += working_[work_index++];
-
             }
         }
 
         work_index = 0;
+
         for (long j = alignment_incidence_->row_ptr[i]; j < alignment_incidence_->row_ptr[i+1]; ++j) {
             start_index = alignment_incidence_->col_ind[j] * num_haplotypes;
             for (int k = 0; k < num_haplotypes; ++k) {
@@ -641,13 +612,13 @@ void SampleAllelicExpression::updateModel3()
     }
 }
 
-void SampleAllelicExpression::updateModel4()
-{
 
+void SampleAllelicExpression::updateModel4() {
     std::swap(current_, previous_);
 
     // clear current_ so we can use it to accumulate sums
     std::fill(current_, current_ + size(), 0.0);
+
 
     int start_index;
     int work_index;
@@ -656,12 +627,12 @@ void SampleAllelicExpression::updateModel4()
 
     //iterate over each read
     for (int i = 0; i != end; ++i) {
-
         work_index = 0;
         read_sum = 0.0;
 
         for (long j = alignment_incidence_->row_ptr[i]; j < alignment_incidence_->row_ptr[i+1]; ++j) {
             start_index = alignment_incidence_->col_ind[j] * num_haplotypes;
+
             for (int k = 0; k < num_haplotypes; ++k) {
                 // initialize all strains at this locus
                 if (alignment_incidence_->val[j] & (1 << k)) {
@@ -674,8 +645,8 @@ void SampleAllelicExpression::updateModel4()
             }
         }
 
-
         work_index = 0;
+
         for (long j = alignment_incidence_->row_ptr[i]; j < alignment_incidence_->row_ptr[i+1]; ++j) {
             start_index = alignment_incidence_->col_ind[j] * num_haplotypes;
             for (int k = 0; k < num_haplotypes; ++k) {
@@ -686,13 +657,22 @@ void SampleAllelicExpression::updateModel4()
 }
 
 
-bool SampleAllelicExpression::converged(double &change)
-{
+bool SampleAllelicExpression::converged(double &change, int verbose) {
     change = 0.0;
+    double current_sum = 0.0;
+    double previous_sum = 0.0;
 
     for (int i = 0; i < size(); ++i) {
-        change += std::abs(current_[i] - previous_[i]);
+        // change += std::abs(current_[i] - previous_[i]);
+        current_sum += current_[i] * alignment_incidence_->transcript_lengths_[i];
+        previous_sum += previous_[i] * alignment_incidence_->transcript_lengths_[i];
+        change += std::abs(current_[i] - previous_[i]) * alignment_incidence_->transcript_lengths_[i];
     }
+
+    if (verbose) {
+        std::cout << "current sum: " << current_sum << ", previous sum: " << previous_sum << std::endl;
+    }
+
 
     if (change < threshold_) {
         return true;
@@ -702,52 +682,249 @@ bool SampleAllelicExpression::converged(double &change)
 }
 
 
-void SampleAllelicExpression::saveStackSums(std::string filename)
-{
-    std::ofstream outfile;
-    outfile.open(filename);
+void SampleAllelicExpression::saveStackSums(std::string filename_isoform, std::string filename_gene,
+                                            int compact_results) {
+    std::ofstream outfile_isoform;
+    outfile_isoform.open(filename_isoform, std::fstream::app);
 
-    outfile << "#Transcript";
-    for (int i = 0; i < num_haplotypes; i++) {
-        outfile << '\t' << alignment_incidence_->haplotype_names[i];
+    outfile_isoform << "#target_id";
+
+    if (num_haplotypes > 1) {
+        for (int i = 0; i < num_haplotypes; i++) {
+            outfile_isoform << '\t' << alignment_incidence_->haplotype_names[i];
+        }
     }
-    outfile << '\t' << "sum" << std::endl;
+
+    outfile_isoform << '\t' << "total" << std::endl;
 
     // use 4 fixed decimal places for output
-    outfile << std::fixed;
-    outfile << std::setprecision(6);
+    outfile_isoform << std::fixed;
+    outfile_isoform << std::setprecision(6);
 
     double sum;
+    std::ostringstream line;
+    line << std::fixed;
+    line << std::setprecision(6);
+    double *gene_sums;
+
+    if (alignment_incidence_->has_gene_mappings_) {
+        gene_sums = new double[num_haplotypes * alignment_incidence_->num_genes()];
+        std::fill(gene_sums, gene_sums + alignment_incidence_->num_genes() * num_haplotypes, 0.0);
+    }
+
     for (int i = 0; i < num_transcripts; i++) {
-        sum = 0.0;
-        outfile << alignment_incidence_->transcript_names[i] << "\t";
-        for (int j = 0; j < num_haplotypes;  j++) {
-            outfile << current_[i * num_haplotypes + j];
-            sum += current_[i * num_haplotypes + j];
-            outfile << '\t';
+        if (num_haplotypes == 1) {
+            if (alignment_incidence_->has_gene_mappings_) {
+                gene_sums[alignment_incidence_->tx_to_gene[i]] += current_[i];
+            }
+
+            if (!(compact_results && current_[i] == 0.0)) {
+                outfile_isoform << alignment_incidence_->transcript_names[i] << '\t' << current_[i] << std::endl;
+            }
+        } else {
+            sum = 0.0;
+            line.str(std::string());
+
+            for (int j = 0; j < num_haplotypes;  j++) {
+                if (alignment_incidence_->has_gene_mappings_) {
+                    gene_sums[alignment_incidence_->tx_to_gene[i] * num_haplotypes + j] += current_[i * num_haplotypes + j];
+                }
+
+                line << current_[i * num_haplotypes + j];
+                sum += current_[i * num_haplotypes + j];
+                line << '\t';
+            }
+
+            if (!(compact_results && sum == 0.0)) {
+                outfile_isoform << alignment_incidence_->transcript_names[i] << '\t' << line.str() << sum << std::endl;
+            }
         }
-        outfile << sum << std::endl;
+    }
+
+    if (alignment_incidence_->has_gene_mappings_) {
+        std::ofstream outfile_gene;
+        outfile_gene.open(filename_gene, std::fstream::app);
+
+        outfile_gene << "#target_id";
+
+        if (num_haplotypes > 1) {
+            for (int i = 0; i < num_haplotypes; i++) {
+                outfile_gene << '\t' << alignment_incidence_->haplotype_names[i];
+            }
+        }
+
+        outfile_gene << '\t' << "total" << std::endl;
+
+        // use 4 fixed decimal places for output
+        outfile_gene << std::fixed;
+        outfile_gene << std::setprecision(6);
+
+        for (int i = 0; i < alignment_incidence_->num_genes(); i++) {
+            if (num_haplotypes == 1) {
+                if (!(compact_results && current_[i] == 0.0)) {
+                    outfile_gene << alignment_incidence_->gene_names[i] << '\t' << gene_sums[i] << std::endl;
+                }
+            } else {
+                sum = 0.0;
+                line.str(std::string());
+
+                for (int j = 0; j < num_haplotypes; j++) {
+                    line << gene_sums[i * num_haplotypes + j];
+                    sum += gene_sums[i * num_haplotypes + j];
+                    line << '\t';
+                }
+
+                if (!(compact_results && sum == 0.0)) {
+                    outfile_gene << alignment_incidence_->gene_names[i] << '\t' << line.str() << sum << std::endl;
+                }
+            }
+        }
     }
 }
 
-void SampleAllelicExpression::applyTranscriptLength() {
-    double sum = 0.0;
+void SampleAllelicExpression::saveStackSums(std::string filename_isoform, std::string filename_gene,
+                                            std::string sample_name, bool output_header, int compact_results) {
+    std::ofstream outfile_isoform;
+    outfile_isoform.open(filename_isoform, std::fstream::app);
+
+    if (output_header) {
+        outfile_isoform << "#target_id";
+
+        if (num_haplotypes > 1) {
+            for (int i = 0; i < num_haplotypes; i++) {
+                outfile_isoform << '\t' << alignment_incidence_->haplotype_names[i];
+            }
+        }
+
+        outfile_isoform << '\t' << "total" << std::endl;
+    }
+
+    outfile_isoform << "#sample_id: " << sample_name << std::endl;
+
+    // use 4 fixed decimal places for output
+    outfile_isoform << std::fixed;
+    outfile_isoform << std::setprecision(6);
+
+    double sum;
+    std::ostringstream line;
+    line << std::fixed;
+    line << std::setprecision(6);
+    double *gene_sums;
+
+    if (alignment_incidence_->has_gene_mappings_) {
+        gene_sums = new double[num_haplotypes * alignment_incidence_->num_genes()];
+        std::fill(gene_sums, gene_sums + alignment_incidence_->num_genes() * num_haplotypes, 0.0);
+    }
+
+    for (int i = 0; i < num_transcripts; i++) {
+        if (num_haplotypes == 1) {
+            if (alignment_incidence_->has_gene_mappings_) {
+                gene_sums[alignment_incidence_->tx_to_gene[i]] += current_[i];
+            }
+
+            if (!(compact_results && current_[i] == 0.0)) {
+                outfile_isoform << alignment_incidence_->transcript_names[i] << '\t' << current_[i] << std::endl;
+            }
+        } else {
+            sum = 0.0;
+            line.str(std::string());
+
+            //outfile_isoform << "----\nTRANSCRIPT: " << alignment_incidence_->transcript_names[i] << std::endl;
+
+            for (int j = 0; j < num_haplotypes;  j++) {
+                if (alignment_incidence_->has_gene_mappings_) {
+                    //outfile_isoform << "HAPLOTYPE: " << alignment_incidence_->haplotype_names[j] << std::endl;
+                    //outfile_isoform << "\tVAL: " << current_[i * num_haplotypes + j] << std::endl;
+                    //outfile_isoform << "\tTOTAL WAS: " << gene_sums[alignment_incidence_->tx_to_gene[i] * num_haplotypes + j] << std::endl;
+                    gene_sums[alignment_incidence_->tx_to_gene[i] * num_haplotypes + j] += current_[i * num_haplotypes + j];
+                    //outfile_isoform << "\tNOW IS: " << gene_sums[alignment_incidence_->tx_to_gene[i] * num_haplotypes + j] << std::endl;
+                }
+
+                line << current_[i * num_haplotypes + j];
+                sum += current_[i * num_haplotypes + j];
+                line << '\t';
+            }
+
+
+            if (!(compact_results && sum == 0.0)) {
+                outfile_isoform << alignment_incidence_->transcript_names[i] << '\t' << line.str() << sum << std::endl;
+            }
+        }
+    }
+
+
+    if (alignment_incidence_->has_gene_mappings_) {
+        std::ofstream outfile_gene;
+        outfile_gene.open(filename_gene, std::fstream::app);
+
+        if (output_header) {
+            outfile_gene << "#target_id";
+
+            if (num_haplotypes > 1) {
+                for (int i = 0; i < num_haplotypes; i++) {
+                    outfile_gene << '\t' << alignment_incidence_->haplotype_names[i];
+                }
+            }
+
+            outfile_gene << '\t' << "total" << std::endl;
+        }
+
+        outfile_gene << "#sample_id: " << sample_name << std::endl;
+
+        // use 4 fixed decimal places for output
+        outfile_gene << std::fixed;
+        outfile_gene << std::setprecision(6);
+
+        for (int i = 0; i < alignment_incidence_->num_genes(); i++) {
+            if (num_haplotypes == 1) {
+                if (!(compact_results && current_[i] == 0.0)) {
+                    outfile_gene << alignment_incidence_->gene_names[i] << '\t' << gene_sums[i] << std::endl;
+                }
+            } else {
+                sum = 0.0;
+                line.str(std::string());
+
+                for (int j = 0; j < num_haplotypes; j++) {
+                    line << gene_sums[i * num_haplotypes + j];
+                    sum += gene_sums[i * num_haplotypes + j];
+                    line << '\t';
+                }
+
+                if (!(compact_results && sum == 0.0)) {
+                    outfile_gene << alignment_incidence_->gene_names[i] << '\t' << line.str() << sum << std::endl;
+                }
+            }
+        }
+    }
+}
+
+
+void SampleAllelicExpression::applyTranscriptLength(bool in_tpm) {
 
     if (alignment_incidence_->transcript_lengths_.size() == 0) {
         // didn't load transcript lengths, don't do anything
         return;
     }
 
-    for (int i = 0; i < num_transcripts; i++) {
-        for (int j = 0; j < num_haplotypes;  j++) {
-            current_[i * num_haplotypes + j] /= alignment_incidence_->transcript_lengths_[i * num_haplotypes + j];
-            sum += current_[i * num_haplotypes + j];
+    if (in_tpm) {
+        double sum = 0.0;
+        for (int i = 0; i < num_transcripts; i++) {
+            for (int j = 0; j < num_haplotypes;  j++) {
+                current_[i * num_haplotypes + j] /= alignment_incidence_->transcript_lengths_[i * num_haplotypes + j];
+                sum += current_[i * num_haplotypes + j];
+            }
+        }
+        for (int i = 0; i < num_transcripts; i++) {
+            for (int j = 0; j < num_haplotypes; j++) {
+                current_[i * num_haplotypes + j] *= 1000000.0 / sum;
+            }
+        }
+    } else {
+        for (int i = 0; i < num_transcripts; i++) {
+            for (int j = 0; j < num_haplotypes;  j++) {
+                current_[i * num_haplotypes + j] /= alignment_incidence_->transcript_lengths_[i * num_haplotypes + j];
+            }
         }
     }
 
-    for (int i = 0; i < num_transcripts; i++) {
-        for (int j = 0; j < num_haplotypes; j++) {
-            current_[i * num_haplotypes + j] *= 1000000.0 / sum;
-        }
-    }
 }
