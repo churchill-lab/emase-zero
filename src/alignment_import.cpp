@@ -512,7 +512,7 @@ void loadNFromBin(std::string filename, AlignmentIncidenceMatrix &aim, int sampl
          * n_tell + (sample_idx * sizeof(int))
          */
 
-        int seek_pos = n_tell + (sample_idx * sizeof(int));
+        long seek_pos = n_tell + (sample_idx * sizeof(int));
         //std::cout << "seek_pos=" << seek_pos << std::endl;
         fileSeek(gzinfile, infile, seek_pos);
 
