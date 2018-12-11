@@ -801,7 +801,7 @@ void SampleAllelicExpression::saveStackSums(std::string filename_isoform, std::s
 
     outfile_isoform << "#sample_id: " << sample_name << std::endl;
 
-    // use 4 fixed decimal places for output
+    // use 6 fixed decimal places for output
     outfile_isoform << std::fixed;
     outfile_isoform << std::setprecision(6);
 
@@ -871,13 +871,13 @@ void SampleAllelicExpression::saveStackSums(std::string filename_isoform, std::s
 
         outfile_gene << "#sample_id: " << sample_name << std::endl;
 
-        // use 4 fixed decimal places for output
+        // use 6 fixed decimal places for output
         outfile_gene << std::fixed;
         outfile_gene << std::setprecision(6);
 
         for (int i = 0; i < alignment_incidence_->num_genes(); i++) {
             if (num_haplotypes == 1) {
-                if (!(compact_results && current_[i] == 0.0)) {
+                if (!(compact_results && gene_sums[i] == 0.0)) {
                     outfile_gene << alignment_incidence_->gene_names[i] << '\t' << gene_sums[i] << std::endl;
                 }
             } else {
