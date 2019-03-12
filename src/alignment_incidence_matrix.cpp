@@ -461,9 +461,9 @@ void AlignmentIncidenceMatrix::loadTranscriptLengths(std::string filename) {
 
     if (lengths_loaded != total_elements) {
         // didn't have enough transcripts in file.  for now, just bail out.
-        std::cerr << "WARNING!" >> std::endl
+        std::cerr << "WARNING!" << std::endl
                   << "LOADING TRANSCRIPT LENGTH FILE " << filename << std::endl
-                  << "EXPECTED " << total_elements << " VALUES BUT FILE CONTAINS
+                  << "EXPECTED " << total_elements << " VALUES BUT FILE CONTAINS "
                   << lengths_loaded << std::endl;
     }
 
