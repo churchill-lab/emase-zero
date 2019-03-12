@@ -404,6 +404,9 @@ void AlignmentIncidenceMatrix::loadTranscriptLengths(std::string filename) {
 
     transcript_lengths_.resize(num_transcripts() * num_haplotypes());
 
+    // fill the lengths array with 1.0
+    std::fill (transcript_lengths_.begin(), transcript_lengths_.end(), 1.0);
+
     int total_elements = num_transcripts() * num_haplotypes();
 
     double length;
