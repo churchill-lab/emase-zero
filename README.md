@@ -1,4 +1,4 @@
 **EMASE-Zero** is a C++ implementation of EMASE, Expectation-Maximization (EM) algorithm for Allele Specific Expression (ASE). Unlike other approaches, we take into account the nested relationship of isoforms and alleles under genes when we disambiguate multiply aligning reads, which improves downstream analyses performed at the gene level. In combination with alntools (an alignment file processor that generates compressed three-dimensional incidence matrix), Zero estimates the expected read counts fast, over 10 times faster than RSEM. Zero also generalizes our fast hierarchical EM to any decent alignment strategies. The original python implementation is available at https://github.com/churchill-lab/emase.
 
-* Free software: GPLv3 license
+* Free software: MIT license
 * Full documentation: http://churchill-lab.github.io/emase-zero/
