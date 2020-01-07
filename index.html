@@ -27,48 +27,58 @@ title: {{ site.name }}
 <pre>
   <code>$ emase-zero -h
 
-  EMASE-Zero Version x.y.z Help
-  -----------------------------
+EMASE-Zero Version 0.3.1 Help
+-----------------------------
 
-  USAGE: emase-zero [options] <alignment_incidence_file>
+USAGE: emase-zero [options] <alignment_incidence_file>
 
-  OPTIONS
-    --bin (-b):
-        Alignment incident matrix file (Binary format) prepared with alntools
-        (https://churchill-lab.github.io/alntools)
+INPUT: Binary Alignment Incidence file prepared with alntools
+       (https://churchill-lab.github.io/alntools/)
 
-    --outbase (-o) <filename>:
-        Specify basename for output file (default="emase-zero.quantified")
+OPTIONS:
+  --model (-m) <int>:
+      Specify normalization model (can be 1-4, default=1)
 
-    --model (-m) <int>:
-        Specify EMASE model (can be 1-4, default=4)
+  --output (-o) <filename>:
+      Specify filename for output file (default is input_basename.stacksum.tsv)
 
-    --transcript-lengths (-l) <filename>:
-        Filename for transcript length file. Tab delimited file where the first
-        field is the transcript ID, and the second is transcript length
+  --transcript-lengths (-l) <filename>:
+      Filename for transcript length file. Format of each line is
+     "TranscriptName_HaplotypeName\tlength"
 
-    --gene-mappings (-g) <filename>:
-        Filename containing transcript to gene mapping. Tab delimited file where
-        the first field is the gene ID, all other fields are the transcript IDs
-        that belong to that gene
+  --gene-mappings (-g) <filename>:
+      Filename containing transcript to gene mapping. Tab delimited file where
+      the first field is the gene ID, all other fields are the transcript IDs
+      that belong to that gene
 
-    --max-iterations (-i) <int>:
-        Specify the maximum number of EM iterations (Default=9999)
+  --compact-results (-c):
+      Omit totals that are equal to 0
 
-    --tolerance (-t) <double>:
-        Specify the convergence threshold. EM will terminate when the
-        sum of the aboslute value of differences in the total TPM from one
-        iteration to the next is lower than this value if performing length
-        adjustment and multipled by #reads if not (Default=0.000001)
+  --no-length-correction (-n):
+      Do not use transcript lengths as correction
 
-    --verbose (-v):
-        Run in verbose mode
+  --samples (-s) <string>:
+      Specify the sample indices.  Either one number or in the format
+      of <sample_start>:<sample_end>
 
-    --version:
-        Print the version and exit
+  --tolerance (-t) <double>:
+      Specify the convergence threshold. emase will terminate when the
+      sum of the aboslute value of differences in the stack sum from one
+      iteration to the next is lower than this value multiplied by
+      1,000,000 if performing length adjustment and multipled by #reads if
+      not (Default = 0.0001)
 
-    --help (-h):
-        Print this message and exit</code>
+  --max-iterations (-i) <int>:
+      Specify the maximum number of EM iterations. (Default 999)
+
+  --verbose (-v):
+       Run in verbose mode
+
+  --version:
+      Print the version and exit
+
+  --help (-h):
+      Print this message and exit</code>
 </pre>
 
 <p>&#8226;<code><strong>-b</strong></code> or <code><strong>--bin</strong></code>: Specify the name of binary equivalence class (EC) file. A binary EC file is generated from a bam file using <a href="churchill-lab.github.io/alntools">alntools</a>. EMASE-Zero does not require any specific aligner to use, but we recommend <a href="http://bowtie-bio.sourceforge.net/index.shtml">bowtie</a> Please see example below for the bowtie options we use for RNA-Seq analyses.</p>
